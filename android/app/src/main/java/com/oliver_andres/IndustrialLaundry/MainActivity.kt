@@ -1,4 +1,4 @@
-package com.industriallaundry
+package com.oliver_andres.IndustrialLaundry
 
 import android.os.Build
 import android.os.Bundle
