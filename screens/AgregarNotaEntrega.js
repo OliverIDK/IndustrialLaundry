@@ -51,7 +51,6 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
     obtenerChoferes();
   }, []);
 
-  // Formatear fecha recibida para mostrarla ordenada con día y hora
   const fechaObj = new Date(fecha);
   const fechaFormateada = fechaObj.toLocaleString(undefined, {
     weekday: 'long',
@@ -63,11 +62,15 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
   });
 
   const continuar = () => {
-    if (!choferSeleccionado) {
+    if (metodoEntrega === 'Delivery' && !choferSeleccionado) {
       alert('Por favor selecciona un chofer para continuar.');
       return;
     }
-    const chofer = choferes.find(c => c.uid === choferSeleccionado);
+
+    const chofer = metodoEntrega === 'Delivery'
+      ? choferes.find(c => c.uid === choferSeleccionado)
+      : null;
+
     navigation.navigate('AgregarNotaCompletada', {
       cliente,
       fecha,
@@ -109,17 +112,21 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
         })}
       </Text>
 
-      <Text style={styles.label}>Asignar chofer</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={choferSeleccionado}
-          onValueChange={(itemValue) => setChoferSeleccionado(itemValue)}
-        >
-          {choferes.map(chofer => (
-            <Picker.Item key={chofer.uid} label={chofer.nombre} value={chofer.uid} />
-          ))}
-        </Picker>
-      </View>
+      {metodoEntrega === 'Delivery' && (
+        <>
+          <Text style={styles.label}>Asignar chofer</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={choferSeleccionado}
+              onValueChange={(itemValue) => setChoferSeleccionado(itemValue)}
+            >
+              {choferes.map(chofer => (
+                <Picker.Item key={chofer.uid} label={chofer.nombre} value={chofer.uid} />
+              ))}
+            </Picker>
+          </View>
+        </>
+      )}
 
       <View style={styles.ticket}>
         <Text style={styles.label}>Resumen:</Text>
@@ -138,7 +145,7 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
       <Button
         title="Finalizar"
         onPress={continuar}
-        disabled={!choferSeleccionado}
+        disabled={metodoEntrega === 'Delivery' && !choferSeleccionado}
       />
     </View>
   );

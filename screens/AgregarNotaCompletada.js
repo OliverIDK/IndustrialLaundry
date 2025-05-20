@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
-import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
-import { database } from '../src/config/fb';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  ActivityIndicator,
+} from "react-native";
+import { collection, addDoc, doc, getDoc } from "firebase/firestore";
+import { database } from "../src/config/fb";
 
 const generarID = () => {
-  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let id = '';
+  const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let id = "";
   for (let i = 0; i < 5; i++) {
     id += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
   }
@@ -25,24 +31,23 @@ const AgregarNotaCompletada = ({ route, navigation }) => {
     chofer,
   } = route.params;
 
-  const [idNota, setIdNota] = useState('');
+  const [idNota, setIdNota] = useState("");
   const [guardando, setGuardando] = useState(true);
-  const [tipoLavadoNombre, setTipoLavadoNombre] = useState('');
+  const [tipoLavadoNombre, setTipoLavadoNombre] = useState("");
 
   useEffect(() => {
     const cargarTipoLavado = async () => {
       try {
-        // Obtener nombre del tipo de lavado desde Firestore
-        const tipoLavadoRef = doc(database, 'tipos_lavado', tipoLavadoId);
+        const tipoLavadoRef = doc(database, "tipos_lavado", tipoLavadoId);
         const tipoLavadoSnap = await getDoc(tipoLavadoRef);
         if (tipoLavadoSnap.exists()) {
           setTipoLavadoNombre(tipoLavadoSnap.data().nombre);
         } else {
-          setTipoLavadoNombre('Desconocido');
+          setTipoLavadoNombre("Desconocido");
         }
       } catch (error) {
-        console.error('Error obteniendo tipo de lavado:', error);
-        setTipoLavadoNombre('Error');
+        console.error("Error obteniendo tipo de lavado:", error);
+        setTipoLavadoNombre("Error");
       }
     };
 
@@ -61,14 +66,14 @@ const AgregarNotaCompletada = ({ route, navigation }) => {
         metodoEntrega,
         fechaEntrega,
         chofer,
+        estado: "Recibido",
         creadaEn: new Date().toISOString(),
       };
 
-      await addDoc(collection(database, 'notas'), nuevaNota);
+      await addDoc(collection(database, "notas"), nuevaNota);
       setGuardando(false);
     };
 
-    // Primero cargamos el tipo de lavado, luego guardamos la nota
     cargarTipoLavado().then(guardarNota);
   }, []);
 
@@ -93,7 +98,7 @@ const AgregarNotaCompletada = ({ route, navigation }) => {
         <Text>Tipo de nota: {tipoNota}</Text>
         <Text>Entrega: {metodoEntrega}</Text>
         <Text>Fecha estimada de entrega: {fechaEntrega}</Text>
-        <Text>Chofer: {chofer.nombre}</Text>
+        <Text>Chofer: {chofer ? chofer.nombre : "Pickup"}</Text>
         <Text style={styles.separador}>Prendas:</Text>
         {prendas.map((p, idx) => (
           <Text key={idx}>
@@ -103,7 +108,7 @@ const AgregarNotaCompletada = ({ route, navigation }) => {
         <Text style={styles.total}>Subtotal: ${subtotal.toFixed(2)}</Text>
       </View>
 
-      <Button title="Volver al inicio" onPress={() => navigation.popToTop()} />
+      <Button title="Volver al inicio" onPress={() => navigation.pop(4)} />
     </View>
   );
 };
@@ -114,31 +119,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   titulo: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   id: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 18,
     marginBottom: 20,
   },
   resumen: {
     padding: 16,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 10,
     marginBottom: 20,
   },
   total: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 8,
   },
   separador: {
     marginTop: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
