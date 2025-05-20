@@ -24,6 +24,8 @@ import AgregarNota from "./screens/AgregarNota";
 import AgregarNotaPrendas from "./screens/AgregarNotaPrendas";
 import AgregarNotaEntrega from "./screens/AgregarNotaEntrega";
 import AgregarNotaCompletada from "./screens/AgregarNotaCompletada";
+import LoginCargando from "./screens/loginCargando";
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -149,6 +151,15 @@ function MyStack() {
       <Stack.Screen
         name="AgregarNotaCompletada"
         component={AgregarNotaCompletada}
+        options={{
+          title: "AgregarNotaCompletada",
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+       <Stack.Screen
+        name="LoginCargando"
+        component={LoginCargando}
         options={{
           title: "AgregarNotaCompletada",
           presentation: "modal",

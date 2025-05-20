@@ -1,12 +1,16 @@
 import "dotenv/config";
+
 export default {
-  "expo": {
-    "name": "IndustrialLaundry",
-    "slug": "IndustrialLaundry",
-    "version": "1.0.0",
-    "android": {
-      "package": "com.oliver_andres.IndustrialLaundry"
+  expo: {
+    name: "IndustrialLaundry",
+    slug: "IndustrialLaundry",
+    version: "1.0.0",
+    android: {
+      package: "com.oliver_andres.IndustrialLaundry"
     },
+    plugins: [
+      "expo-font"
+    ],
     extra: {
       apiKey: process.env.API_KEY,
       authDomain: process.env.AUTH_DOMAIN,
