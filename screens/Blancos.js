@@ -1,113 +1,97 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-  Button,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { database } from "../src/config/fb";
-import { useNavigation } from "@react-navigation/native";
+import { StyleSheet, Text, View, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { db } from '../src/config/fb';
 
-const Blancos = () => {
+const NotasCliente = () => {
   const [notas, setNotas] = useState([]);
-  const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(
-      collection(database, "notas"),
-      where("tipoNota", "==", "Blancos")
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setNotas(lista);
-    });
+    const cargarNotas = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
 
-    return () => unsubscribe();
+        if (!user) {
+          console.warn('No hay usuario autenticado');
+          return;
+        }
+
+        const uid = user.uid;
+
+        // Buscar notas donde el campo cliente.uid sea igual al uid del usuario
+        const notasQuery = query(
+          collection(db, 'notas'),
+          where('cliente.uid', '==', uid)
+        );
+
+        const querySnapshot = await getDocs(notasQuery);
+        const notasData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        setNotas(notasData);
+      } catch (error) {
+        console.error('Error al cargar notas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarNotas();
   }, []);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.nota}>
-      <Text style={styles.id}>ID: {item.idNota}</Text>
-      <Text>Cliente: {item.cliente?.nombre || "---"}</Text>
-      <Text>Fecha: {item.fecha}</Text>
-      <Text>Subtotal: ${item.subtotal?.toFixed(2) || 0}</Text>
-    </TouchableOpacity>
-  );
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <Text>Cargando notas...</Text>
+      </View>
+    );
+  }
+
+  if (notas.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text>No tienes notas asignadas.</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.titulo}>Notas de Blancos</Text>
-
-      <FlatList
-        data={notas}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.fila}
-        contentContainerStyle={notas.length === 0 && styles.vacioContainer}
-        ListEmptyComponent={
-          <Text style={styles.vacio}>No hay notas registradas.</Text>
-        }
-        key={"2cols"}
-      />
-
-      <Button
-        title="Agregar Nota"
-        onPress={() => navigation.navigate("AgregarNota")}
-      />
-    </View>
+    <FlatList
+      data={notas}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.notaCard}>
+          <Text style={styles.title}>Tipo de nota: {item.tipoNota}</Text>
+          <Text>Estado: {item.estado}</Text>
+          <Text>Fecha de entrega: {item.fechaEntrega}</Text>
+        </View>
+      )}
+    />
   );
 };
 
-export default Blancos;
+export default NotasCliente;
 
 const styles = StyleSheet.create({
-  container: {
+  center: {
     flex: 1,
-    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  titulo: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
+  notaCard: {
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    borderRadius: 10,
   },
-  fila: {
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  nota: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 12,
-    marginHorizontal: 4,
-    minWidth: 150,
-  },
-  id: {
-    fontWeight: "bold",
-    marginBottom: 6,
-  },
-  vacio: {
-    textAlign: "center",
-    fontStyle: "italic",
-    color: "#999",
-  },
-  vacioContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  boton: {
-    marginTop: 16,
-    backgroundColor: "#007BFF",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  botonTexto: {
-    color: "#fff",
-    fontWeight: "bold",
+  title: {
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

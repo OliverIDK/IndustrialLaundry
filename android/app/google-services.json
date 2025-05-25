@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "195382210327",
+    "firebase_url": "https://industriallaundry-a8208-default-rtdb.firebaseio.com",
+    "project_id": "industriallaundry-a8208",
+    "storage_bucket": "industriallaundry-a8208.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195382210327:android:5f0ff32ecf234997ed9152",
+        "android_client_info": {
+          "package_name": "com.oliver_andres.IndustrialLaundry"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXQ4PmOgWRnTMXcNxtF0WG9kup7_gqnWo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

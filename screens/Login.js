@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Button, Alert, ImageBackground, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ImageBackground, TouchableOpacity, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import React, { useState } from 'react';
 import { useFonts } from 'expo-font';
 import { TextInput } from 'react-native-paper';
@@ -15,12 +15,12 @@ const Login = ({ navigation }) => {
 
   const [fontsLoaded] = useFonts({
     'Quicksand-Regular': require('../src/Assets/fonts/Quicksand-Regular.ttf'),
-  })
+  });
 
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigation.navigate('TabGroupAdmin');
+      navigation.navigate('AuthLoadingScreen');
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Correo o contraseña inválidos');
@@ -28,112 +28,112 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.head}>
-        <ImageBackground
-          style={styles.logo}
-          source={require("../src/Assets/Imagenes/logo1.png")}
-          resizeMode='contain'
-        >
-        </ImageBackground>
-
-      </View>
-      <View style={styles.body}>
-        <TextInput
-          style={styles.inputs}
-          label="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
-          keyboardType="email-address"
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          mode="outlined"
-          activeOutlineColor="#004aad"
-          outlineColor="#ccc"
-          outlineStyle={{
-            borderRadius: 12,
-            borderWidth: 1.5,
-          }}
-          theme={{
-            colors: {
-              background: "#fff",
-              placeholder: "#555",
-              text: "#555",
-            },
-            fonts: {
-              regular: {
-                fontFamily: 'Quicksand-Regular',
-                fontWeight: 'normal',
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <View style={styles.head}>
+          <ImageBackground
+            style={styles.logo}
+            source={require("../src/Assets/Imagenes/logo1.png")}
+            resizeMode='contain'
+          />
+        </View>
+        <View style={styles.body}>
+          <TextInput
+            style={styles.inputs}
+            label="Email"
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            keyboardType="email-address"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            mode="outlined"
+            activeOutlineColor="#004aad"
+            outlineColor="#ccc"
+            outlineStyle={{
+              borderRadius: 12,
+              borderWidth: 1.5,
+            }}
+            theme={{
+              colors: {
+                background: "#fff",
+                placeholder: "#555",
+                text: "#555",
               },
-            },
-          }}
-          left={
-            <TextInput.Icon
-              icon={() => (
-                <Icon
-                  name="mail"
-                  size={24}
-                  color={isFocused ? "#004aad" : "#555"}
-                />
-              )}
-            />
-          }
-        />
-
-        <TextInput
-          style={styles.inputs}
-          label="Contraseña"
-          placeholder="Ingresa tu contraseña"
-          value={password}
-          onChangeText={(password) => setPassword(password)}
-          onFocus={() => setIsFocusedPassword(true)}
-          onBlur={() => setIsFocusedPassword(false)}
-          mode="outlined"
-          secureTextEntry={!showPassword}
-          activeOutlineColor="#004aad"
-          outlineColor="#ccc"
-          outlineStyle={{
-            borderRadius: 12,
-            borderWidth: 1.5,
-          }}
-          theme={{
-            colors: {
-              background: "#fff",
-              placeholder: "#555",
-              text: "#555",
-            },
-          }}
-          left={
-            <TextInput.Icon
-              icon={() => (
-                <Icon
-                  name="lock"
-                  size={24}
-                  color={isFocusedPassword ? "#004aad" : "#555"}
-                />
-              )}
-            />
-          }
-          right={
-            password.length > 0 && (
+              fonts: {
+                regular: {
+                  fontFamily: 'Quicksand-Regular',
+                  fontWeight: 'normal',
+                },
+              },
+            }}
+            left={
               <TextInput.Icon
                 icon={() => (
                   <Icon
-                    name={showPassword ? "eye-with-line" : "eye"}
-                    size={20}
+                    name="mail"
+                    size={24}
+                    color={isFocused ? "#004aad" : "#555"}
+                  />
+                )}
+              />
+            }
+          />
+
+          <TextInput
+            style={styles.inputs}
+            label="Contraseña"
+            placeholder="Ingresa tu contraseña"
+            value={password}
+            onChangeText={(password) => setPassword(password)}
+            onFocus={() => setIsFocusedPassword(true)}
+            onBlur={() => setIsFocusedPassword(false)}
+            mode="outlined"
+            secureTextEntry={!showPassword}
+            activeOutlineColor="#004aad"
+            outlineColor="#ccc"
+            outlineStyle={{
+              borderRadius: 12,
+              borderWidth: 1.5,
+            }}
+            theme={{
+              colors: {
+                background: "#fff",
+                placeholder: "#555",
+                text: "#555",
+              },
+            }}
+            left={
+              <TextInput.Icon
+                icon={() => (
+                  <Icon
+                    name="lock"
+                    size={24}
                     color={isFocusedPassword ? "#004aad" : "#555"}
                   />
                 )}
-                onPress={() => setShowPassword(!showPassword)}
               />
-            )
-          }
-        />
-        <TouchableOpacity style={styles.btnSignIn} onPress={handleLogin}>
-          <Text style={styles.btnText}>Iniciar Sesión</Text>
-        </TouchableOpacity>
+            }
+            right={
+              password.length > 0 && (
+                <TextInput.Icon
+                  icon={() => (
+                    <Icon
+                      name={showPassword ? "eye-with-line" : "eye"}
+                      size={20}
+                      color={isFocusedPassword ? "#004aad" : "#555"}
+                    />
+                  )}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              )
+            }
+          />
+          <TouchableOpacity style={styles.btnSignIn} onPress={handleLogin}>
+            <Text style={styles.btnText}>Iniciar Sesión</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 410,
     height: 280,
-    justifyContent: 'center',  // para alinear el texto verticalmente
+    justifyContent: 'center',
     alignItems: 'center',
   },
   body: {
@@ -167,12 +167,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 80,
     paddingTop: 20,
   },
-
   inputs: {
     width: "90%",
     fontSize: 16,
     marginBottom: 20,
-    fontFamily: 'Quicksand-Regular'
+    fontFamily: 'Quicksand-Regular',
   },
   btnSignIn: {
     height: 50,
@@ -185,6 +184,6 @@ const styles = StyleSheet.create({
   btnText: {
     color: "#fff",
     fontSize: 16,
-    fontFamily: 'Quicksand-Regular'
-  }
+    fontFamily: 'Quicksand-Regular',
+  },
 });

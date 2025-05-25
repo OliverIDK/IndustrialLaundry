@@ -3,7 +3,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import Login from "./screens/Login";
-import Notas from "./screens/Notas";
 import Prendas from "./screens/Prendas";
 import Inventario from "./screens/Inventario";
 import Blancos from "./screens/Blancos";
@@ -24,8 +23,13 @@ import AgregarNota from "./screens/AgregarNota";
 import AgregarNotaPrendas from "./screens/AgregarNotaPrendas";
 import AgregarNotaEntrega from "./screens/AgregarNotaEntrega";
 import AgregarNotaCompletada from "./screens/AgregarNotaCompletada";
-import LoginCargando from "./screens/loginCargando";
-
+import GPS from "./screens/Gps";
+import Mapa from "./screens/Mapa";
+import AuthLoadingScreen from "./screens/AuthLoadingScreen";
+import Configuracion from "./screens/Configuracion";
+import Cliente from "./screens/Cliente";
+import NotasCliente from "./screens/NotasCliente";
+import Steps from "./screens/Steps";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -34,6 +38,13 @@ const MaterialTaps = createMaterialTopTabNavigator();
 function MyStack() {
   return (
     <Stack.Navigator>
+      <Stack.Screen
+        name="AuthLoadingScreen"
+        component={AuthLoadingScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="Login"
         component={Login}
@@ -44,6 +55,46 @@ function MyStack() {
       <Stack.Screen
         name="TabGroupAdmin"
         component={TabGroupAdmin}
+        options={{
+          headerShown: false,
+          title: "Volver",
+        }}
+      />
+      <Stack.Screen
+        name="TabGroupAuxiliar"
+        component={TabGroupAuxiliar}
+        options={{
+          headerShown: false,
+          title: "Volver",
+        }}
+      />
+      <Stack.Screen
+        name="TabGroupLavador"
+        component={TabGroupLavador}
+        options={{
+          headerShown: false,
+          title: "Volver",
+        }}
+      />
+      <Stack.Screen
+        name="TabGroupSupervisor"
+        component={TabGroupSupervisor}
+        options={{
+          headerShown: false,
+          title: "Volver",
+        }}
+      />
+      <Stack.Screen
+        name="TabGroupChofer"
+        component={TabGroupChofer}
+        options={{
+          headerShown: false,
+          title: "Volver",
+        }}
+      />
+      <Stack.Screen
+        name="TabGroupCliente"
+        component={TabGroupCliente}
         options={{
           headerShown: false,
           title: "Volver",
@@ -157,11 +208,20 @@ function MyStack() {
           animation: "slide_from_bottom",
         }}
       />
-       <Stack.Screen
-        name="LoginCargando"
-        component={LoginCargando}
+      <Stack.Screen
+        name="Mapa"
+        component={Mapa}
         options={{
-          title: "AgregarNotaCompletada",
+          title: "Mapa",
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+            <Stack.Screen
+        name="Steps"
+        component={Steps}
+        options={{
+          title: "Steps",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -187,9 +247,11 @@ function TabGroupAdmin() {
             iconName = "inbox";
           } else if (route.name == "Inventario") {
             iconName = "clipboard";
-          } //else if (route.name == "Reporte") {
-          //iconName = "bar-graph";
-          //}
+          } else if (route.name == "GPS") {
+            iconName = "location-pin";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
           return <Icon name={iconName} color={color} size={size} />;
         },
       })}
@@ -206,10 +268,213 @@ function TabGroupAdmin() {
       />
       <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
       <Tab.Screen name="Inventario" component={Inventario} />
+      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
+function TabGroupAuxiliar() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarShowLabel: false,
+        animation: "shift",
+        headerShadowVisible: false,
+        tabBarActiveTintColor: "#144E78",
+        tabBarIcon: ({ color, focused, size }) => {
+          let iconName;
+          if (route.name == "Servicios") {
+            iconName = "home";
+          } else if (route.name == "Usuarios") {
+            iconName = "users";
+          } else if (route.name == "Tabs") {
+            iconName = "inbox";
+          } else if (route.name == "Inventario") {
+            iconName = "clipboard";
+          } else if (route.name == "GPS") {
+            iconName = "location-pin";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
+          return <Icon name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={TapsService}
+        options={{ title: "Servicios" }}
+      />
+      <Tab.Screen
+        name="Usuarios"
+        component={Usuarios}
+        options={{ title: "Usuarios" }}
+      />
+      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Inventario" component={Inventario} />
+      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );
 }
 
+function TabGroupLavador() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarShowLabel: false,
+        animation: "shift",
+        headerShadowVisible: false,
+        tabBarActiveTintColor: "#144E78",
+        tabBarIcon: ({ color, focused, size }) => {
+          let iconName;
+          if (route.name == "Servicios") {
+            iconName = "home";
+          } else if (route.name == "Usuarios") {
+            iconName = "users";
+          } else if (route.name == "Tabs") {
+            iconName = "inbox";
+          } else if (route.name == "Inventario") {
+            iconName = "clipboard";
+          } else if (route.name == "GPS") {
+            iconName = "location-pin";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
+          return <Icon name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={TapsService}
+        options={{ title: "Servicios" }}
+      />
+      <Tab.Screen
+        name="Usuarios"
+        component={Usuarios}
+        options={{ title: "Usuarios" }}
+      />
+      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Inventario" component={Inventario} />
+      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
+
+function TabGroupSupervisor() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarShowLabel: false,
+        animation: "shift",
+        headerShadowVisible: false,
+        tabBarActiveTintColor: "#144E78",
+        tabBarIcon: ({ color, focused, size }) => {
+          let iconName;
+          if (route.name == "Servicios") {
+            iconName = "home";
+          } else if (route.name == "Usuarios") {
+            iconName = "users";
+          } else if (route.name == "Tabs") {
+            iconName = "inbox";
+          } else if (route.name == "Inventario") {
+            iconName = "clipboard";
+          } else if (route.name == "GPS") {
+            iconName = "location-pin";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
+          return <Icon name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={TapsService}
+        options={{ title: "Servicios" }}
+      />
+      <Tab.Screen
+        name="Usuarios"
+        component={Usuarios}
+        options={{ title: "Usuarios" }}
+      />
+      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Inventario" component={Inventario} />
+      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
+function TabGroupChofer() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarShowLabel: false,
+        animation: "shift",
+        headerShadowVisible: false,
+        tabBarActiveTintColor: "#144E78",
+        tabBarIcon: ({ color, focused, size }) => {
+          let iconName;
+          if (route.name == "Servicios") {
+            iconName = "home";
+          } else if (route.name == "Usuarios") {
+            iconName = "users";
+          } else if (route.name == "Tabs") {
+            iconName = "inbox";
+          } else if (route.name == "Inventario") {
+            iconName = "clipboard";
+          } else if (route.name == "GPS") {
+            iconName = "location-pin";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
+          return <Icon name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Inventario" component={Inventario} />
+      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
+
+function TabGroupCliente() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarShowLabel: false,
+        animation: "shift",
+        headerShadowVisible: false,
+        tabBarActiveTintColor: "#144E78",
+        tabBarIcon: ({ color, focused, size }) => {
+          let iconName;
+          if (route.name == "Servicios") {
+            iconName = "home";
+          } else if (route.name == "Usuarios") {
+            iconName = "users";
+          } else if (route.name == "Tabs") {
+            iconName = "inbox";
+          } else if (route.name == "Configuracion") {
+            iconName = "cog";
+          }
+          return <Icon name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={Cliente}
+        options={{ title: "Servicios" }}
+      />
+      <Tab.Screen name="Tabs" component={NotasCliente} options={{ title: "Notas" }} />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
 function Taps() {
   return (
     <MaterialTaps.Navigator
