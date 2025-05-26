@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,32 +6,111 @@ import {
   Button,
   StyleSheet,
   Alert,
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { auth, database } from '../src/config/fb';
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { decode as atob } from "base-64";
+
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, database } from "../src/config/fb";
+import { supabase } from "../src/config/sp";
 
 const AgregarUsuarios = ({ navigation }) => {
-  const [rol, setRol] = useState('Lavador');
-  const [email, setEmail] = useState('');
-  const [nombre, setNombre] = useState('');
-  const [password, setPassword] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [telefono, setTelefono] = useState('');
+  const [rol, setRol] = useState("Lavador");
+  const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [password, setPassword] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Función para seleccionar imagen
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permiso denegado",
+        "Se necesita permiso para acceder a la galería."
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  };
+
+  // Función para subir imagen a Supabase y devolver URL pública
+  const subirAvatarSupabase = async (uri, uid) => {
+    try {
+      setUploading(true);
+      const fileExt = uri.split(".").pop();
+      const fileName = `${uid}.${fileExt}`;
+
+      // Leer archivo base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Convertir base64 a Uint8Array
+      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
+      // Subir al bucket 'avatars'
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, binary, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: `image/${fileExt}`,
+        });
+
+      if (error) throw error;
+
+      // Obtener URL pública
+      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (error) {
+      Alert.alert("Error", "No se pudo subir la imagen");
+      console.error(error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleRegistrar = async () => {
     if (!email || !nombre || !password) {
-      Alert.alert('Error', 'Rellena todos los campos obligatorios');
+      Alert.alert("Error", "Rellena todos los campos obligatorios");
       return;
     }
 
     try {
-      // 1. Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Crear usuario en Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const uid = userCredential.user.uid;
 
-      // 2. Crear documento en Firestore con los datos del usuario
+      let avatarUrl = null;
+      if (avatarUri) {
+        avatarUrl = await subirAvatarSupabase(avatarUri, uid);
+      }
+
+      // Crear documento Firestore
       const usuarioData = {
         uid,
         email,
@@ -39,18 +118,22 @@ const AgregarUsuarios = ({ navigation }) => {
         rol,
       };
 
-      if (rol === 'Cliente') {
+      if (rol === "Cliente") {
         usuarioData.direccion = direccion;
         usuarioData.telefono = telefono;
       }
 
-      await setDoc(doc(database, 'usuarios', uid), usuarioData);
+      if (avatarUrl) {
+        usuarioData.avatarUrl = avatarUrl;
+      }
 
-      Alert.alert('Éxito', 'Usuario registrado correctamente');
+      await setDoc(doc(database, "usuarios", uid), usuarioData);
+
+      Alert.alert("Éxito", "Usuario registrado correctamente");
       navigation.goBack();
     } catch (error) {
-      console.error('Error al registrar usuario:', error);
-      Alert.alert('Error', error.message);
+      console.error("Error al registrar usuario:", error);
+      Alert.alert("Error", error.message);
     }
   };
 
@@ -94,7 +177,7 @@ const AgregarUsuarios = ({ navigation }) => {
         secureTextEntry
       />
 
-      {rol === 'Cliente' && (
+      {rol === "Cliente" && (
         <>
           <TextInput
             placeholder="Dirección"
@@ -112,6 +195,18 @@ const AgregarUsuarios = ({ navigation }) => {
         </>
       )}
 
+      <View style={{ marginVertical: 10 }}>
+        <Button title="Seleccionar Avatar" onPress={pickImage} />
+        {avatarUri && (
+          <Image
+            source={{ uri: avatarUri }}
+            style={{ width: 100, height: 100, marginTop: 10, borderRadius: 50 }}
+          />
+        )}
+      </View>
+
+      {uploading && <ActivityIndicator size="large" color="#0000ff" />}
+
       <Button title="Registrar Usuario" onPress={handleRegistrar} />
     </View>
   );
@@ -123,16 +218,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 22,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,

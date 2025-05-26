@@ -1,97 +1,95 @@
-import { StyleSheet, Text, View, FlatList } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from '../src/config/fb';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  Button,
+} from "react-native";
+import React, { useEffect, useState } from "react";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { database } from "../src/config/fb";
+import { useNavigation } from "@react-navigation/native";
 
-const NotasCliente = () => {
+const Blancos = () => {
   const [notas, setNotas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   useEffect(() => {
-    const cargarNotas = async () => {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+    const q = query(
+      collection(database, "notas"),
+      where("tipoNota", "==", "Blancos") // Solo Blancos
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setNotas(lista);
+    });
 
-        if (!user) {
-          console.warn('No hay usuario autenticado');
-          return;
-        }
-
-        const uid = user.uid;
-
-        // Buscar notas donde el campo cliente.uid sea igual al uid del usuario
-        const notasQuery = query(
-          collection(db, 'notas'),
-          where('cliente.uid', '==', uid)
-        );
-
-        const querySnapshot = await getDocs(notasQuery);
-        const notasData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
-        setNotas(notasData);
-      } catch (error) {
-        console.error('Error al cargar notas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    cargarNotas();
+    return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <Text>Cargando notas...</Text>
-      </View>
-    );
-  }
-
-  if (notas.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text>No tienes notas asignadas.</Text>
-      </View>
-    );
-  }
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.nota}>
+      <Text style={styles.id}>ID: {item.idNota}</Text>
+      <Text>Cliente: {item.cliente?.nombre || "---"}</Text>
+      <Text>Fecha: {item.fecha}</Text>
+      <Text>Subtotal: ${item.subtotal?.toFixed(2) || 0}</Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <FlatList
-      data={notas}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View style={styles.notaCard}>
-          <Text style={styles.title}>Tipo de nota: {item.tipoNota}</Text>
-          <Text>Estado: {item.estado}</Text>
-          <Text>Fecha de entrega: {item.fechaEntrega}</Text>
-        </View>
-      )}
-    />
+    <View style={styles.container}>
+      <Text style={styles.titulo}>Notas de Blancos</Text>
+
+      <FlatList
+        data={notas}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <Text style={styles.vacio}>No hay notas registradas.</Text>
+        }
+        numColumns={2}
+        columnWrapperStyle={styles.fila}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        key={"2cols"}
+      />
+      <Button
+        title="Agregar Nota"
+        onPress={() => navigation.navigate("AgregarNota")}
+      />
+    </View>
   );
 };
 
-export default NotasCliente;
+export default Blancos;
 
 const styles = StyleSheet.create({
-  center: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 16,
   },
-  notaCard: {
-    backgroundColor: '#f2f2f2',
-    padding: 15,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
+  titulo: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
   },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16,
+  fila: {
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  nota: {
+    flexBasis: "48%",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 12,
+  },
+  id: {
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+  vacio: {
+    textAlign: "center",
+    marginTop: 20,
+    fontStyle: "italic",
   },
 });

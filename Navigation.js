@@ -30,6 +30,7 @@ import Configuracion from "./screens/Configuracion";
 import Cliente from "./screens/Cliente";
 import NotasCliente from "./screens/NotasCliente";
 import Steps from "./screens/Steps";
+import EditarUsuario from "./screens/EditarUsuario";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -222,6 +223,15 @@ function MyStack() {
         component={Steps}
         options={{
           title: "Steps",
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="EditarUsuario"
+        component={EditarUsuario}
+        options={{
+          title: "EditarUsuario",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}

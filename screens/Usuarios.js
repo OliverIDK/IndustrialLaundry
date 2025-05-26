@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { database } from '../src/config/fb';
-import { Menu, IconButton } from 'react-native-paper';
+  Image,
+} from "react-native";
+import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
+import { database } from "../src/config/fb";
+import { Menu, IconButton } from "react-native-paper";
 
 const eliminarUsuario = async (id) => {
   try {
-    await deleteDoc(doc(database, 'usuarios', id));
-    console.log('Usuario eliminado con ID:', id);
+    await deleteDoc(doc(database, "usuarios", id));
+    console.log("Usuario eliminado con ID:", id);
   } catch (error) {
-    console.error('Error al eliminar usuario:', error);
+    console.error("Error al eliminar usuario:", error);
   }
 };
 
@@ -30,7 +31,7 @@ const Usuarios = ({ navigation }) => {
   const cerrarMenu = () => setVisibleMenuId(null);
 
   useEffect(() => {
-    const usuariosRef = collection(database, 'usuarios');
+    const usuariosRef = collection(database, "usuarios");
     const unsubscribe = onSnapshot(
       usuariosRef,
       (snapshot) => {
@@ -42,12 +43,12 @@ const Usuarios = ({ navigation }) => {
         setLoading(false);
       },
       (error) => {
-        console.error('Error al obtener usuarios:', error);
+        console.error("Error al obtener usuarios:", error);
         setLoading(false);
       }
     );
 
-    return () => unsubscribe(); // Limpia la suscripción
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -68,8 +69,17 @@ const Usuarios = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.usuarioCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <View>
+            <View style={styles.row}>
+              <Image
+                source={
+                  item.avatarUrl
+                    ? { uri: item.avatarUrl }
+                    : require("../src/Assets/Imagenes/empleado.png")
+                }
+                style={styles.avatar}
+              />
+
+              <View style={styles.infoContainer}>
                 <Text style={styles.nombre}>{item.nombre}</Text>
                 <Text style={styles.rol}>{item.rol}</Text>
               </View>
@@ -88,7 +98,7 @@ const Usuarios = ({ navigation }) => {
                 <Menu.Item
                   onPress={() => {
                     cerrarMenu();
-                    navigation.navigate('EditarUsuario', { usuario: item });
+                    navigation.navigate("EditarUsuario", { usuario: item });
                   }}
                   title="Editar"
                 />
@@ -96,13 +106,13 @@ const Usuarios = ({ navigation }) => {
                   onPress={() => {
                     cerrarMenu();
                     Alert.alert(
-                      '¿Eliminar usuario?',
+                      "¿Eliminar usuario?",
                       `¿Estás seguro de eliminar a "${item.nombre}"?`,
                       [
-                        { text: 'Cancelar', style: 'cancel' },
+                        { text: "Cancelar", style: "cancel" },
                         {
-                          text: 'Eliminar',
-                          style: 'destructive',
+                          text: "Eliminar",
+                          style: "destructive",
                           onPress: () => eliminarUsuario(item.id),
                         },
                       ]
@@ -118,7 +128,7 @@ const Usuarios = ({ navigation }) => {
 
       <Button
         title="Agregar Usuario"
-        onPress={() => navigation.navigate('AgregarUsuarios')}
+        onPress={() => navigation.navigate("AgregarUsuarios")}
       />
     </View>
   );
@@ -135,26 +145,39 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   usuarioCard: {
     padding: 12,
     marginBottom: 12,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     borderRadius: 8,
-    flexDirection: 'column',
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  infoContainer: {
+    flex: 1,
+    marginLeft: 12,
   },
   nombre: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   rol: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
