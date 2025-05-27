@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  TouchableOpacity
 } from "react-native";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { Menu, IconButton } from "react-native-paper";
+import { AntDesign } from '@expo/vector-icons';
 
 const eliminarUsuario = async (id) => {
   try {
@@ -62,7 +64,7 @@ const Usuarios = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Usuarios</Text>
+
 
       <FlatList
         data={usuarios}
@@ -126,10 +128,12 @@ const Usuarios = ({ navigation }) => {
         )}
       />
 
-      <Button
-        title="Agregar Usuario"
+      <TouchableOpacity
+        style={styles.boton}
         onPress={() => navigation.navigate("AgregarUsuarios")}
-      />
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -179,5 +183,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  boton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#004AAD",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
   },
 });
