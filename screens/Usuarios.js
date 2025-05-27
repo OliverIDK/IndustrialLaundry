@@ -2,18 +2,18 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  FlatList,
-  Button,
   StyleSheet,
   ActivityIndicator,
   Alert,
   Image,
-  TouchableOpacity
+  TouchableOpacity,
+  ScrollView
 } from "react-native";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
-import { Menu, IconButton } from "react-native-paper";
+import { Menu, IconButton, TextInput } from "react-native-paper";
 import { AntDesign } from '@expo/vector-icons';
+import { useFonts } from "expo-font";
 
 const eliminarUsuario = async (id) => {
   try {
@@ -24,13 +24,40 @@ const eliminarUsuario = async (id) => {
   }
 };
 
+const agruparPorLetra = (lista) => {
+  const agrupados = {};
+
+  lista.forEach((usuario) => {
+    const letra = usuario.nombre[0].toUpperCase();
+    if (!agrupados[letra]) {
+      agrupados[letra] = [];
+    }
+    agrupados[letra].push(usuario);
+  });
+
+  // Ordenar alfabéticamente las letras
+  return Object.keys(agrupados)
+    .sort()
+    .map((letra) => ({
+      letra,
+      usuarios: agrupados[letra].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    }));
+};
+
 const Usuarios = ({ navigation }) => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visibleMenuId, setVisibleMenuId] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
-  const abrirMenu = (id) => setVisibleMenuId(id);
-  const cerrarMenu = () => setVisibleMenuId(null);
+  const [fontsLoaded] = useFonts({
+    'Quicksand-Regular': require('../src/Assets/fonts/Quicksand-Regular.ttf'),
+    'Quicksand-SemiBold': require('../src/Assets/fonts/Quicksand-SemiBold.ttf'),
+    'Raleway-Regular': require('../src/Assets/fonts/Raleway-Regular.ttf'),
+    'Montserrat-Regular': require('../src/Assets/fonts/Montserrat-Regular.ttf'),
+    'Poppins-Regular': require('../src/Assets/fonts/Poppins-Regular.ttf'),
+  });
 
   useEffect(() => {
     const usuariosRef = collection(database, "usuarios");
@@ -49,84 +76,115 @@ const Usuarios = ({ navigation }) => {
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
   }, []);
+
+  if (!fontsLoaded) return null;
+
+  const usuariosFiltrados = usuarios.filter((usuario) =>
+    usuario.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    usuario.rol.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const usuariosAgrupados = agruparPorLetra(usuariosFiltrados);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Cargando usuarios...</Text>
+        <Text style={[styles.texto, { marginTop: 10 }]}>Cargando usuarios...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        <TextInput
+          mode="outlined"
+          label="Buscar usuario..."
+          placeholder="Nombre o rol"
+          value={busqueda}
+          onChangeText={setBusqueda}
+          style={styles.input}
+          left={<TextInput.Icon icon="magnify" />}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          outlineStyle={{
+            borderRadius: 25,
+            borderColor: "#f1f1f1",
+            ActiveOutlineColor: "#f1f1f1",
+          }}
+          theme={{
+            colors: {
+              background: "#f1f1f1",
+              placeholder: "#f1f1f1",
+              text: "#f1f1f1",
+            },
+          }}
+        />
 
-
-      <FlatList
-        data={usuarios}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.usuarioCard}>
-            <View style={styles.row}>
-              <Image
-                source={
-                  item.avatarUrl
-                    ? { uri: item.avatarUrl }
-                    : require("../src/Assets/Imagenes/empleado.png")
-                }
-                style={styles.avatar}
-              />
-
-              <View style={styles.infoContainer}>
-                <Text style={styles.nombre}>{item.nombre}</Text>
-                <Text style={styles.rol}>{item.rol}</Text>
-              </View>
-
-              <Menu
-                visible={visibleMenuId === item.id}
-                onDismiss={cerrarMenu}
-                anchor={
-                  <IconButton
-                    icon="dots-vertical"
-                    size={24}
-                    onPress={() => abrirMenu(item.id)}
+        {usuariosAgrupados.map((grupo) => (
+          <View key={grupo.letra}>
+            <Text style={styles.letraTitulo}>{grupo.letra}</Text>
+            {grupo.usuarios.map((item) => (
+              <View key={item.id} style={styles.usuarioCard}>
+                <View style={styles.row}>
+                  <Image
+                    source={
+                      item.avatarUrl
+                        ? { uri: item.avatarUrl }
+                        : require("../src/Assets/Imagenes/empleado.png")
+                    }
+                    style={styles.avatar}
                   />
-                }
-              >
-                <Menu.Item
-                  onPress={() => {
-                    cerrarMenu();
-                    navigation.navigate("EditarUsuario", { usuario: item });
-                  }}
-                  title="Editar"
-                />
-                <Menu.Item
-                  onPress={() => {
-                    cerrarMenu();
-                    Alert.alert(
-                      "¿Eliminar usuario?",
-                      `¿Estás seguro de eliminar a "${item.nombre}"?`,
-                      [
-                        { text: "Cancelar", style: "cancel" },
-                        {
-                          text: "Eliminar",
-                          style: "destructive",
-                          onPress: () => eliminarUsuario(item.id),
-                        },
-                      ]
-                    );
-                  }}
-                  title="Eliminar"
-                />
-              </Menu>
-            </View>
+                  <View style={styles.infoContainer}>
+                    <Text style={styles.nombre}>{item.nombre}</Text>
+                    <Text style={styles.rol}>{item.rol}</Text>
+                  </View>
+                  <Menu
+                    visible={visibleMenuId === item.id}
+                    onDismiss={() => setVisibleMenuId(null)}
+                    anchor={
+                      <IconButton
+                        icon="dots-vertical"
+                        size={24}
+                        onPress={() => setVisibleMenuId(item.id)}
+                      />
+                    }
+                  >
+                    <Menu.Item
+                      onPress={() => {
+                        setVisibleMenuId(null);
+                        navigation.navigate("EditarUsuario", { usuario: item });
+                      }}
+                      title="Editar"
+                    />
+                    <Menu.Item
+                      onPress={() => {
+                        setVisibleMenuId(null);
+                        Alert.alert(
+                          "¿Eliminar usuario?",
+                          `¿Estás seguro de eliminar a "${item.nombre}"?`,
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Eliminar",
+                              style: "destructive",
+                              onPress: () => eliminarUsuario(item.id),
+                            },
+                          ]
+                        );
+                      }}
+                      title="Eliminar"
+                    />
+                  </Menu>
+                </View>
+              </View>
+            ))}
           </View>
-        )}
-      />
+        ))}
+      </ScrollView>
 
       <TouchableOpacity
         style={styles.boton}
@@ -144,22 +202,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    paddingTop: 40,
+    paddingTop: 5,
+    backgroundColor: "#fff",
   },
-  title: {
-    fontSize: 24,
+  input: {
+    fontSize: 16,
     marginBottom: 20,
-    textAlign: "center",
+    fontFamily: "Quicksand-Regular",
   },
   usuarioCard: {
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 8,
+    padding: 10,
+    marginBottom: 1,
+    backgroundColor: "#fff",
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
   },
   avatar: {
@@ -172,17 +229,29 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   nombre: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    color: "#264653",
+    fontFamily: "Quicksand-SemiBold",
   },
   rol: {
     fontSize: 14,
-    color: "#555",
+    color: "#6c757d",
+    fontFamily: "Quicksand-Regular",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  vacio: {
+    textAlign: "center",
+    color: "#999",
+    marginTop: 30,
+    fontStyle: "italic",
+    fontFamily: "Quicksand-Regular",
+  },
+  texto: {
+    fontFamily: "Quicksand-Regular",
   },
   boton: {
     position: "absolute",
@@ -196,4 +265,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 100,
   },
+  letraTitulo: {
+  fontSize: 14,
+  fontWeight: "bold",
+  marginTop: 2,
+  marginBottom: 2,
+  color: "#004AAD",
+  fontFamily: "Quicksand-SemiBold",
+},
 });

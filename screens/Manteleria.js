@@ -11,11 +11,32 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from '@expo/vector-icons';
+import { TextInput } from "react-native-paper";
+import { useFonts } from "expo-font";
 
 const Manteleria = () => {
   const [notas, setNotas] = useState([]);
   const [tiposLavado, setTiposLavado] = useState({});
   const navigation = useNavigation();
+  const [busqueda, setBusqueda] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    'Quicksand-Regular': require('../src/Assets/fonts/Quicksand-Regular.ttf'),
+    'Quicksand-SemiBold': require('../src/Assets/fonts/Quicksand-SemiBold.ttf'),
+    'Raleway-Regular': require('../src/Assets/fonts/Raleway-Regular.ttf'),
+    'Montserrat-Regular': require('../src/Assets/fonts/Montserrat-Regular.ttf'),
+    'Poppins-Regular': require('../src/Assets/fonts/Poppins-Regular.ttf'),
+  });
+
+  const filtrarNotas = () => {
+    if (busqueda.trim() === "") return notas;
+
+    return notas.filter((nota) => {
+      const nombreCliente = nota.cliente?.nombre?.toLowerCase() || "";
+      return nombreCliente.includes(busqueda.toLowerCase());
+    });
+  };
 
   // Obtener tipos de lavado desde Firebase
   useEffect(() => {
@@ -62,7 +83,9 @@ const Manteleria = () => {
   // Renderizar cada nota
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.nota}>
-      <Text style={styles.tituloCliente}>{item.cliente?.nombre || "Cliente"}</Text>
+      <Text style={styles.tituloCliente}>
+        {item.cliente?.nombre || "Cliente"}
+      </Text>
       <Text style={styles.texto}>Fecha: {formatearFecha(item.fecha)}</Text>
       <Text style={styles.texto}>
         Lavado: {tiposLavado[item.tipoLavadoId] || "Sin especificar"}
@@ -80,29 +103,61 @@ const Manteleria = () => {
     </TouchableOpacity>
   );
 
+
   return (
     <View style={styles.container}>
-
-      <FlatList
-        data={notas}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.vacio}>No hay notas registradas.</Text>
-        }
-        numColumns={2}
-        columnWrapperStyle={styles.fila}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        key={"2cols"}
+      <TextInput
+        mode="outlined"
+        label="Buscar nota..."
+        placeholder="Nombre del cliente"
+        value={busqueda}
+        onChangeText={setBusqueda}
+        style={{
+          marginBottom: 12,
+          borderRadius: 25,
+          backgroundColor: "#f1f1f1",
+          marginTop: -15,
+        }}
+        left={<TextInput.Icon icon="magnify" />}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        outlineStyle={{
+          borderRadius: 25,
+          borderColor: "#f1f1f1",
+          ActiveOutlineColor: "#f1f1f1",
+        }}
+        theme={{
+          colors: {
+            background: "#f1f1f1",
+            placeholder: "#888",
+            text: "#000",
+          },
+        }}
       />
 
-        <TouchableOpacity
-          style={styles.boton}
-          onPress={() => navigation.navigate("AgregarNota")}
-        >
-          <AntDesign name="plus" size={24} color="white" />
-        </TouchableOpacity>
-  
+     
+        <FlatList
+          data={filtrarNotas()}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <Text style={styles.vacio}>No hay notas registradas.</Text>
+          }
+          numColumns={2}
+          columnWrapperStyle={styles.fila}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          key={"2cols"}
+        />
+     
+
+
+      <TouchableOpacity
+        style={styles.boton}
+        onPress={() => navigation.navigate("AgregarNota")}
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
+
     </View>
   );
 };
@@ -112,22 +167,26 @@ export default Manteleria;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingTop: 20,
+    padding: 8,
     backgroundColor: "#fff",
   },
+ 
   titulo: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 16,
     textAlign: "center",
     color: "#264653",
+    fontFamily: "Quicksand-Regular",
   },
   fila: {
-    justifyContent: "space-between",
-    marginBottom: 16,
+    justifyContent: "flex-start",
+    gap: 8,
+    marginBottom: 8,
   },
   nota: {
-    flexBasis: "48%",
+    flexBasis: "49%",
     backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 14,
@@ -138,14 +197,15 @@ const styles = StyleSheet.create({
   },
   tituloCliente: {
     fontSize: 16,
-    fontWeight: "bold",
     color: "#1d3557",
     marginBottom: 8,
+    fontFamily: "Quicksand-SemiBold", // o cualquier otra fuente que cargaste
   },
   texto: {
     fontSize: 14,
     marginBottom: 4,
     color: "#333",
+    fontFamily: "Quicksand-Regular",
   },
   prendasContainer: {
     marginTop: 8,
@@ -158,6 +218,7 @@ const styles = StyleSheet.create({
   prendaNombre: {
     fontSize: 14,
     color: "#000",
+    fontFamily: "Quicksand-Regular",
   },
   cantidad: {
     fontSize: 14,
