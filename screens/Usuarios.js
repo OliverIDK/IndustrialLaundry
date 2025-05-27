@@ -102,8 +102,7 @@ const Usuarios = ({ navigation }) => {
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <TextInput
           mode="outlined"
-          label="Buscar usuario..."
-          placeholder="Nombre o rol"
+          placeholder="Buscar usuario"
           value={busqueda}
           onChangeText={setBusqueda}
           style={styles.input}

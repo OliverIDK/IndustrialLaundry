@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, ActivityIndicator } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
+import { TextInput, Button } from 'react-native-paper';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { database } from '../src/config/fb';
+import RadioGroup from 'react-native-radio-buttons-group';
+import { Picker } from '@react-native-picker/picker';
+import { format } from 'date-fns';
 
 const AgregarNota = ({ navigation }) => {
   const [clientes, setClientes] = useState([]);
@@ -22,7 +25,6 @@ const AgregarNota = ({ navigation }) => {
         const clientesSnapshot = await getDocs(clientesQuery);
         const listaClientes = clientesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setClientes(listaClientes);
-
         const tiposLavadoSnapshot = await getDocs(collection(database, 'tipos_lavado'));
         const listaTiposLavado = tiposLavadoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setTiposLavado(listaTiposLavado);
@@ -36,6 +38,8 @@ const AgregarNota = ({ navigation }) => {
     fetchData();
   }, []);
 
+
+
   const continuar = () => {
     if (!clienteSeleccionado || !tipoLavadoSeleccionado) {
       alert('Por favor selecciona cliente y tipo de lavado.');
@@ -45,11 +49,47 @@ const AgregarNota = ({ navigation }) => {
 
     navigation.navigate('AgregarNotaPrendas', {
       fecha: fecha.toISOString(),
-      cliente,                  // <-- Aquí envío el objeto cliente completo
+      cliente,
       tipoLavadoId: tipoLavadoSeleccionado,
       tipoNota: tipoNotaSeleccionado,
     });
   };
+  const [radioButtons, setRadioButtons] = useState([
+    { id: '1', label: 'Blancos', value: 'Blancos', selected: true },
+    { id: '2', label: 'Mantelería', value: 'Mantelería', selected: false },
+  ]);
+
+
+  const onPressRadioButton = (data) => {
+    let updatedButtons;
+    if (Array.isArray(data)) {
+      updatedButtons = data.map(rb => ({
+        ...rb,
+        labelStyle: {
+          color: rb.selected ? '#004AAD' : '#555',
+          fontWeight: rb.selected ? 'bold' : 'normal',
+        },
+        color: '#004AAD'
+      }));
+    } else {
+      updatedButtons = radioButtons.map(rb => ({
+        ...rb,
+        selected: rb.id === data.toString(),
+        labelStyle: {
+          color: rb.id === data.toString() ? '#004AAD' : '#555',
+          fontWeight: rb.id === data.toString() ? 'bold' : 'normal',
+        },
+        color: '#004AAD'
+      }));
+    }
+    setRadioButtons(updatedButtons);
+
+    const seleccionado = updatedButtons.find(rb => rb.selected);
+    if (seleccionado) setTipoNotaSeleccionado(seleccionado.value);
+  };
+
+
+
 
   if (loading) {
     return (
@@ -65,9 +105,13 @@ const AgregarNota = ({ navigation }) => {
       <Text style={styles.title}>Crear Nueva Nota</Text>
 
       <Text style={styles.label}>Fecha de la nota:</Text>
-      <View style={styles.dateBox}>
-        <Text>{fecha.toDateString()}</Text>
-      </View>
+      <TextInput
+        mode="outlined"
+        value={format(fecha, 'dd/MM/yyyy')}  // Ejemplo de formato día/mes/año
+        style={styles.input}
+        editable={false}
+        left={<TextInput.Icon icon="calendar" />}
+      />
 
       <Text style={styles.label}>Selecciona cliente:</Text>
       <Picker
@@ -81,29 +125,45 @@ const AgregarNota = ({ navigation }) => {
         ))}
       </Picker>
 
+
+
       <Text style={styles.label}>Selecciona tipo de lavado:</Text>
-      <Picker
-        selectedValue={tipoLavadoSeleccionado}
-        onValueChange={(itemValue) => setTipoLavadoSeleccionado(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="-- Selecciona tipo de lavado --" value="" />
-        {tiposLavado.map(tipo => (
-          <Picker.Item key={tipo.id} label={tipo.nombre} value={tipo.id} />
+      <View style={styles.lavadoContainer}>
+        {tiposLavado.map((tipo) => (
+          <TouchableOpacity
+            key={tipo.id}
+            style={[
+              styles.lavadoButton,
+              tipoLavadoSeleccionado === tipo.id && styles.selectedButton,
+            ]}
+            onPress={() => setTipoLavadoSeleccionado(tipo.id)}
+          >
+            <Text style={[
+              styles.lavadoText,
+              tipoLavadoSeleccionado === tipo.id && styles.selectedText
+            ]}>{tipo.nombre}</Text>
+          </TouchableOpacity>
         ))}
-      </Picker>
+      </View>
 
       <Text style={styles.label}>Tipo de nota:</Text>
-      <Picker
-        selectedValue={tipoNotaSeleccionado}
-        onValueChange={(itemValue) => setTipoNotaSeleccionado(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Blancos" value="Blancos" />
-        <Picker.Item label="Mantelería" value="Mantelería" />
-      </Picker>
+      <RadioGroup
+        radioButtons={Array.isArray(radioButtons) ? radioButtons : []}
+        onPress={onPressRadioButton}
+        containerStyle={{ marginBottom: 20 }}
+        layout="row"
+      />
 
-      <Button title="Continuar" onPress={continuar} />
+
+
+      <Button
+        mode="contained"
+        onPress={continuar}
+        style={styles.button}
+        icon="arrow-right"
+      >
+        Continuar
+      </Button>
     </View>
   );
 };
@@ -111,16 +171,46 @@ const AgregarNota = ({ navigation }) => {
 export default AgregarNota;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   label: { marginTop: 15, fontSize: 16 },
-  picker: { height: 50, width: '100%' },
-  dateBox: {
-    padding: 12,
-    backgroundColor: '#eee',
+  input: {
+    backgroundColor: '#f2f2f2',
+    marginBottom: 10,
+  },
+  lavadoContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+  },
+  lavadoButton: {
+    borderWidth: 1,
+    borderColor: '#aaa',
     borderRadius: 8,
-    marginTop: 5,
-    marginBottom: 15,
+    padding: 10,
+    margin: 5,
+  },
+  selectedButton: {
+    borderColor: '#004AAD',
+    backgroundColor: '#EAF1FF',
+  },
+  lavadoText: {
+    color: '#555',
+  },
+  selectedText: {
+    color: '#004AAD',
+    fontWeight: 'bold',
+  },
+  button: {
+    backgroundColor: '#004AAD',
+    borderRadius: 8,
+    paddingVertical: 8,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  option: {
+    padding: 8,
+    backgroundColor: '#f1f1f1',
+    marginHorizontal: 4,
+    borderRadius: 6,
+  },
 });

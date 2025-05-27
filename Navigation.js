@@ -2,6 +2,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { ImageBackground, TouchableOpacity } from "react-native";
+
 import Login from "./screens/Login";
 import Prendas from "./screens/Prendas";
 import Inventario from "./screens/Inventario";
@@ -218,7 +220,7 @@ function MyStack() {
           animation: "slide_from_bottom",
         }}
       />
-            <Stack.Screen
+      <Stack.Screen
         name="Steps"
         component={Steps}
         options={{
@@ -276,7 +278,7 @@ function TabGroupAdmin() {
         component={Usuarios}
         options={{ title: "Usuarios" }}
       />
-      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Tabs" component={Taps} options={{title: "Notas"}}/>
       <Tab.Screen name="Inventario" component={Inventario} />
       <Tab.Screen name="GPS" component={GPS} />
       <Tab.Screen name="Configuracion" component={Configuracion} />

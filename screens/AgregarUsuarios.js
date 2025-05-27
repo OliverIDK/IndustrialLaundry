@@ -2,17 +2,23 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   Button,
   StyleSheet,
   Alert,
   Image,
   ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode as atob } from "base-64";
+import { TextInput } from "react-native-paper";
+import Icon from "@expo/vector-icons/Entypo";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -28,15 +34,12 @@ const AgregarUsuarios = ({ navigation }) => {
   const [telefono, setTelefono] = useState("");
   const [avatarUri, setAvatarUri] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Función para seleccionar imagen
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        "Permiso denegado",
-        "Se necesita permiso para acceder a la galería."
-      );
+      Alert.alert("Permiso denegado", "Se necesita permiso para acceder a la galería.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -51,22 +54,16 @@ const AgregarUsuarios = ({ navigation }) => {
     }
   };
 
-  // Función para subir imagen a Supabase y devolver URL pública
   const subirAvatarSupabase = async (uri, uid) => {
     try {
       setUploading(true);
       const fileExt = uri.split(".").pop();
       const fileName = `${uid}.${fileExt}`;
-
-      // Leer archivo base64
       const base64 = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
-      // Convertir base64 a Uint8Array
       const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
-      // Subir al bucket 'avatars'
       const { error } = await supabase.storage
         .from("avatars")
         .upload(fileName, binary, {
@@ -77,9 +74,7 @@ const AgregarUsuarios = ({ navigation }) => {
 
       if (error) throw error;
 
-      // Obtener URL pública
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
-
       return data.publicUrl;
     } catch (error) {
       Alert.alert("Error", "No se pudo subir la imagen");
@@ -97,12 +92,7 @@ const AgregarUsuarios = ({ navigation }) => {
     }
 
     try {
-      // Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
       let avatarUrl = null;
@@ -110,7 +100,6 @@ const AgregarUsuarios = ({ navigation }) => {
         avatarUrl = await subirAvatarSupabase(avatarUri, uid);
       }
 
-      // Crear documento Firestore
       const usuarioData = {
         uid,
         email,
@@ -138,79 +127,135 @@ const AgregarUsuarios = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Agregar Usuario</Text>
+    <ScrollView contentContainerStyle={{ backgroundColor: '#fff' }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Crear Cuenta Nueva</Text>
+        <Text style={styles.subtitle}>Llena los datos o continúa con redes sociales</Text>
 
-      <Text>Rol:</Text>
-      <Picker
-        selectedValue={rol}
-        style={styles.input}
-        onValueChange={(itemValue) => setRol(itemValue)}
-      >
-        <Picker.Item label="Lavador" value="Lavador" />
-        <Picker.Item label="Auxiliar" value="Auxiliar" />
-        <Picker.Item label="Supervisor" value="Supervisor" />
-        <Picker.Item label="Cliente" value="Cliente" />
-        <Picker.Item label="Chofer" value="Chofer" />
-        <Picker.Item label="Administrador" value="Administrador" />
-      </Picker>
+        <Text style={styles.label}>Rol</Text>
+        <View style={{
+          borderWidth: 1,
+          borderColor: '#f1f1f1',
+          backgroundColor: '#f1f1f1',
+          borderRadius: 16,
+          marginBottom: 10,
+          overflow: 'hidden', // importante para que el borderRadius funcione
+        }}>
+          <Picker
+            selectedValue={rol}
+            onValueChange={(itemValue) => setRol(itemValue)}
+            style={{ paddingHorizontal: 10 }} // opcional, mejora visual
+          >
+            <Picker.Item label="Lavador" value="Lavador" />
+            <Picker.Item label="Auxiliar" value="Auxiliar" />
+            <Picker.Item label="Supervisor" value="Supervisor" />
+            <Picker.Item label="Cliente" value="Cliente" />
+            <Picker.Item label="Chofer" value="Chofer" />
+            <Picker.Item label="Administrador" value="Administrador" />
+          </Picker>
+        </View>
 
-      <TextInput
-        placeholder="Correo electrónico"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        placeholder="Nombre"
-        style={styles.input}
-        value={nombre}
-        onChangeText={setNombre}
-      />
-      <TextInput
-        placeholder="Contraseña"
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <Text style={styles.label}>Nombre completo</Text>
+        <TextInput
+          mode="outlined"
+          left={<TextInput.Icon icon="account" color={'#8e8e8e'} />}
+          value={nombre}
+          onChangeText={setNombre}
+          style={styles.input}
+          outlineStyle={{
+            borderRadius: 16,
+            borderColor: '#f1f1f1',
+          }}
+        />
 
-      {rol === "Cliente" && (
-        <>
-          <TextInput
-            placeholder="Dirección"
-            style={styles.input}
-            value={direccion}
-            onChangeText={setDireccion}
-          />
-          <TextInput
-            placeholder="Teléfono"
-            style={styles.input}
-            value={telefono}
-            onChangeText={setTelefono}
-            keyboardType="phone-pad"
-          />
-        </>
-      )}
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          mode="outlined"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          left={<TextInput.Icon icon="email" color={'#8e8e8e'} />}
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          outlineStyle={{
+            borderRadius: 16,
+            borderColor: '#f1f1f1',
+          }}
+        />
 
-      <View style={{ marginVertical: 10 }}>
-        <Button title="Seleccionar Avatar" onPress={pickImage} />
-        {avatarUri && (
-          <Image
-            source={{ uri: avatarUri }}
-            style={{ width: 100, height: 100, marginTop: 10, borderRadius: 50 }}
-          />
+        <Text style={styles.label}>Contraseña</Text>
+        <TextInput
+          mode="outlined"
+          secureTextEntry={!showPassword}
+          left={<TextInput.Icon icon="lock" color={'#8e8e8e'} />}
+          right={
+            <TextInput.Icon
+              icon={showPassword ? "eye-off" : "eye"}
+              onPress={() => setShowPassword(!showPassword)}
+              color="#8e8e8e"
+            />
+          }
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          outlineStyle={{
+            borderRadius: 16,
+            borderColor: '#f1f1f1',
+          }}
+        />
+
+        {rol === "Cliente" && (
+          <>
+            <Text style={styles.label}>Dirección</Text>
+            <TextInput
+              mode="outlined"
+              left={<TextInput.Icon icon="home" color={'#8e8e8e'} />}
+              value={direccion}
+              onChangeText={setDireccion}
+              style={styles.input}
+              outlineStyle={{
+                borderRadius: 16,
+                borderColor: '#f1f1f1',
+              }}
+            />
+
+            <Text style={styles.label}>Teléfono</Text>
+            <TextInput
+              mode="outlined"
+              keyboardType="phone-pad"
+              left={<TextInput.Icon icon="phone" color="#8e8e8e" />}
+              value={telefono}
+              onChangeText={setTelefono}
+              style={styles.input}
+              outlineStyle={{
+                borderRadius: 16,
+                borderColor: '#f1f1f1',
+              }}
+            />
+          </>
         )}
+
+        <View style={{ marginVertical: 10, alignItems: "center" }}>
+          <Button title="Seleccionar Avatar" onPress={pickImage} />
+          {avatarUri && (
+            <Image
+              source={{ uri: avatarUri }}
+              style={{ width: 100, height: 100, marginTop: 10, borderRadius: 50 }}
+            />
+          )}
+        </View>
+
+        {uploading && <ActivityIndicator size="large" color="#0000ff" />}
+
+        <TouchableOpacity style={styles.button} onPress={handleRegistrar}>
+          <Text style={styles.buttonText}>REGISTRAR</Text>
+        </TouchableOpacity>
+
       </View>
+    </ScrollView>
 
-      {uploading && <ActivityIndicator size="large" color="#0000ff" />}
-
-      <Button title="Registrar Usuario" onPress={handleRegistrar} />
-    </View>
   );
-};
+}
 
 export default AgregarUsuarios;
 
@@ -219,17 +264,51 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: "center",
+    backgroundColor: '#fff'
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 14,
     textAlign: "center",
     marginBottom: 20,
+    color: "#666",
+  },
+  label: {
+    marginBottom: 5,
+    fontWeight: "bold",
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 10,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: "#f1f1f1",
+
+  },
+  button: {
+    backgroundColor: "#3D6DFF",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  footerText: {
+    textAlign: "center",
+    color: "#666",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+    color: "#333",
   },
 });
