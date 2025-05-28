@@ -129,8 +129,20 @@ const AgregarUsuarios = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={{ backgroundColor: '#fff' }}>
       <View style={styles.container}>
-        <Text style={styles.title}>Crear Cuenta Nueva</Text>
-        <Text style={styles.subtitle}>Llena los datos o continúa con redes sociales</Text>
+
+        <View style={{ alignItems: "center", marginBottom: 20 }}>
+          <TouchableOpacity style={styles.fotoUser} onPress={pickImage}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            ) : (
+              <Image
+                source={require("../src/Assets/Imagenes/usuario.png")}
+                style={styles.avatarImage}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+
 
         <Text style={styles.label}>Rol</Text>
         <View style={{
@@ -157,6 +169,7 @@ const AgregarUsuarios = ({ navigation }) => {
 
         <Text style={styles.label}>Nombre completo</Text>
         <TextInput
+
           mode="outlined"
           left={<TextInput.Icon icon="account" color={'#8e8e8e'} />}
           value={nombre}
@@ -208,6 +221,7 @@ const AgregarUsuarios = ({ navigation }) => {
           <>
             <Text style={styles.label}>Dirección</Text>
             <TextInput
+
               mode="outlined"
               left={<TextInput.Icon icon="home" color={'#8e8e8e'} />}
               value={direccion}
@@ -235,15 +249,6 @@ const AgregarUsuarios = ({ navigation }) => {
           </>
         )}
 
-        <View style={{ marginVertical: 10, alignItems: "center" }}>
-          <Button title="Seleccionar Avatar" onPress={pickImage} />
-          {avatarUri && (
-            <Image
-              source={{ uri: avatarUri }}
-              style={{ width: 100, height: 100, marginTop: 10, borderRadius: 50 }}
-            />
-          )}
-        </View>
 
         {uploading && <ActivityIndicator size="large" color="#0000ff" />}
 
@@ -288,6 +293,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#f1f1f1",
 
   },
+  fotoUser: {
+    borderRadius: 100,
+    overflow: "hidden",
+    backgroundColor: "#3D6DFF",
+    width: 125,
+    height: 125,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarImage: {
+    width: "102%",
+    height: "102%",
+    resizeMode: "cover",
+  },
   button: {
     backgroundColor: "#3D6DFF",
     padding: 14,
@@ -310,5 +329,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 4,
     color: "#333",
+  
   },
 });

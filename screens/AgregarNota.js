@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, FlatList }
 import { TextInput, Button } from 'react-native-paper';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { database } from '../src/config/fb';
-import RadioGroup from 'react-native-radio-buttons-group';
 import { Picker } from '@react-native-picker/picker';
 import { format } from 'date-fns';
 
@@ -16,7 +15,7 @@ const AgregarNota = ({ navigation }) => {
 
   const [clienteSeleccionado, setClienteSeleccionado] = useState('');
   const [tipoLavadoSeleccionado, setTipoLavadoSeleccionado] = useState('');
-  const [tipoNotaSeleccionado, setTipoNotaSeleccionado] = useState('Blancos');
+  const [tipoNotaSeleccionado, setTipoNotaSeleccionado] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,51 +53,6 @@ const AgregarNota = ({ navigation }) => {
       tipoNota: tipoNotaSeleccionado,
     });
   };
-  const [radioButtons, setRadioButtons] = useState([
-    { id: '1', label: 'Blancos', value: 'Blancos', selected: true },
-    { id: '2', label: 'Mantelería', value: 'Mantelería', selected: false },
-  ]);
-
-
-  const onPressRadioButton = (data) => {
-    let updatedButtons;
-    if (Array.isArray(data)) {
-      updatedButtons = data.map(rb => ({
-        ...rb,
-        labelStyle: {
-          color: rb.selected ? '#004AAD' : '#555',
-          fontWeight: rb.selected ? 'bold' : 'normal',
-        },
-        color: '#004AAD'
-      }));
-    } else {
-      updatedButtons = radioButtons.map(rb => ({
-        ...rb,
-        selected: rb.id === data.toString(),
-        labelStyle: {
-          color: rb.id === data.toString() ? '#004AAD' : '#555',
-          fontWeight: rb.id === data.toString() ? 'bold' : 'normal',
-        },
-        color: '#004AAD'
-      }));
-    }
-    setRadioButtons(updatedButtons);
-
-    const seleccionado = updatedButtons.find(rb => rb.selected);
-    if (seleccionado) setTipoNotaSeleccionado(seleccionado.value);
-  };
-
-
-
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Cargando datos...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -113,21 +67,32 @@ const AgregarNota = ({ navigation }) => {
         left={<TextInput.Icon icon="calendar" />}
       />
 
-      <Text style={styles.label}>Selecciona cliente:</Text>
-      <Picker
-        selectedValue={clienteSeleccionado}
-        onValueChange={(itemValue) => setClienteSeleccionado(itemValue)}
-        style={styles.picker}
+      <Text style={styles.label}>Cliente:</Text>
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: '#f1f1f1',
+          backgroundColor: '#f1f1f1',
+          borderRadius: 16,
+          marginBottom: 10,
+          overflow: 'hidden', // para que el borderRadius funcione
+        }}
       >
-        <Picker.Item label="-- Selecciona cliente --" value="" />
-        {clientes.map(cliente => (
-          <Picker.Item key={cliente.id} label={cliente.nombre} value={cliente.id} />
-        ))}
-      </Picker>
+        <Picker
+          selectedValue={clienteSeleccionado}
+          onValueChange={(itemValue) => setClienteSeleccionado(itemValue)}
+          style={{ paddingHorizontal: 10 }} // opcional para mejor visual
+        >
+          <Picker.Item label="Selecciona cliente" value="" />
+          {clientes.map(cliente => (
+            <Picker.Item key={cliente.id} label={cliente.nombre} value={cliente.id} />
+          ))}
+        </Picker>
+      </View>
 
 
 
-      <Text style={styles.label}>Selecciona tipo de lavado:</Text>
+      <Text style={styles.label}>Tipo de lavado:</Text>
       <View style={styles.lavadoContainer}>
         {tiposLavado.map((tipo) => (
           <TouchableOpacity
@@ -147,15 +112,27 @@ const AgregarNota = ({ navigation }) => {
       </View>
 
       <Text style={styles.label}>Tipo de nota:</Text>
-      <RadioGroup
-        radioButtons={Array.isArray(radioButtons) ? radioButtons : []}
-        onPress={onPressRadioButton}
-        containerStyle={{ marginBottom: 20 }}
-        layout="row"
-      />
-
-
-
+      <View style={styles.notaContainer}>
+        {['Blancos', 'Mantelería'].map((tipo) => (
+          <TouchableOpacity
+            key={tipo}
+            style={[
+              styles.notaButton,
+              tipoNotaSeleccionado === tipo && styles.selectedButton,
+            ]}
+            onPress={() => setTipoNotaSeleccionado(tipo)}
+          >
+            <Text
+              style={[
+                styles.lavadoText,
+                tipoNotaSeleccionado === tipo && styles.selectedText,
+              ]}
+            >
+              {tipo}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <Button
         mode="contained"
         onPress={continuar}
@@ -182,6 +159,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginVertical: 10,
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
   lavadoButton: {
     borderWidth: 1,
@@ -189,6 +168,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     margin: 5,
+    width: 110,
+    height: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notaContainer:{
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notaButton:{
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 8,
+    padding: 10,
+    margin: 5,
+    width: 130,
+    height: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedButton: {
     borderColor: '#004AAD',
@@ -212,5 +213,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f1f1',
     marginHorizontal: 4,
     borderRadius: 6,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+    color: "#333",
   },
 });

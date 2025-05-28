@@ -1,6 +1,5 @@
-// AgregarNotaPrendas.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { database } from '../src/config/fb';
 
@@ -66,6 +65,17 @@ const AgregarNotaPrendas = ({ route, navigation }) => {
     }
   };
 
+  const handleCantidadManual = (text, id, precio) => {
+    let valor = parseInt(text);
+    if (isNaN(valor) || valor < 0) valor = 0;
+
+    const cantidadAnterior = cantidadSeleccionada[id] || 0;
+    const diferencia = valor - cantidadAnterior;
+
+    setCantidadSeleccionada(prev => ({ ...prev, [id]: valor }));
+    setSubtotal(prev => prev + diferencia * precio);
+  };
+
   const continuar = () => {
     const seleccion = prendas
       .filter(p => cantidadSeleccionada[p.id] > 0)
@@ -103,12 +113,26 @@ const AgregarNotaPrendas = ({ route, navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.nombre}>{item.nombre}</Text>
-            <Text>Precio: ${item.precio}</Text>
-            <View style={styles.controles}>
-              <Button title="-" onPress={() => decrementar(item.id, item.precio)} />
-              <Text style={styles.cantidad}>{cantidadSeleccionada[item.id] || 0}</Text>
-              <Button title="+" onPress={() => incrementar(item.id, item.precio)} />
+            <View style={styles.itemRow}>
+              <View style={styles.itemInfo}>
+                <Text style={styles.nombre}>{item.nombre}</Text>
+                <Text style={styles.precio}>Precio: ${item.precio}</Text>
+              </View>
+              <View style={styles.controles}>
+                <Button title="-" onPress={() => decrementar(item.id, item.precio)} />
+                <TextInput
+                  style={styles.inputCantidad}
+                  keyboardType="numeric"
+                  value={(cantidadSeleccionada[item.id] || 0).toString()}
+                  onChangeText={(text) => {
+                    const nuevaCantidad = parseInt(text) || 0;
+                    const diferencia = nuevaCantidad - (cantidadSeleccionada[item.id] || 0);
+                    setCantidadSeleccionada(prev => ({ ...prev, [item.id]: nuevaCantidad }));
+                    setSubtotal(prev => prev + diferencia * item.precio);
+                  }}
+                />
+                <Button title="+" onPress={() => incrementar(item.id, item.precio)} />
+              </View>
             </View>
           </View>
         )}
@@ -130,25 +154,44 @@ const styles = StyleSheet.create({
     fontSize: 22,
     textAlign: 'center',
     marginBottom: 16,
+    fontWeight: 'bold',
   },
   card: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: '#f2f2f2',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 12,
+    alignItems: 'center',
+    elevation: 2,
+  },
+  infoContainer: {
+    flex: 1,
   },
   nombre: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  precio: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 4,
   },
   controles: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
-  cantidad: {
-    marginHorizontal: 12,
+  inputCantidad: {
+    width: 50,
+    height: 35,
+    marginHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    textAlign: 'center',
     fontSize: 16,
+    backgroundColor: '#fff',
   },
   subtotal: {
     fontSize: 20,
@@ -161,4 +204,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  itemRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+itemInfo: {
+  flex: 1,
+},
+precio: {
+  fontSize: 14,
+  color: '#555',
+},
+controles: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+},
+inputCantidad: {
+  width: 40,
+  height: 50,
+  textAlign: 'center',
+  borderColor: '#ccc',
+  borderWidth: 1,
+  borderRadius: 4,
+  marginHorizontal: 6,
+  backgroundColor: '#fff',
+},
+
 });
