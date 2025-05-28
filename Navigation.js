@@ -259,7 +259,7 @@ function TabGroupAdmin() {
             iconName = "inbox";
           } else if (route.name == "Inventario") {
             iconName = "clipboard";
-          } else if (route.name == "GPS") {
+          } else if (route.name == "Mapa") {
             iconName = "location-pin";
           } else if (route.name == "Configuracion") {
             iconName = "cog";
@@ -280,7 +280,7 @@ function TabGroupAdmin() {
       />
       <Tab.Screen name="Tabs" component={Taps} options={{title: "Notas"}}/>
       <Tab.Screen name="Inventario" component={Inventario} />
-      <Tab.Screen name="GPS" component={GPS} />
+      <Tab.Screen name="Mapa" component={Mapa} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );
