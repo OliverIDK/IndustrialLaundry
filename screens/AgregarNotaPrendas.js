@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator, TextInput, Keyboard } from 'react-native';
+import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator, Keyboard, TouchableOpacity, ScrollView} from 'react-native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { database } from '../src/config/fb';
+import { TextInput } from "react-native-paper";
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const AgregarNotaPrendas = ({ route, navigation }) => {
   const { tipoLavadoId, cliente, fecha, tipoNota } = route.params;
@@ -107,38 +109,66 @@ const AgregarNotaPrendas = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Selecciona las prendas</Text>
-      <FlatList
-        data={prendas}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.itemRow}>
-              <View style={styles.itemInfo}>
-                <Text style={styles.nombre}>{item.nombre}</Text>
-                <Text style={styles.precio}>Precio: ${item.precio}</Text>
-              </View>
-              <View style={styles.controles}>
-                <Button title="-" onPress={() => decrementar(item.id, item.precio)} />
-                <TextInput
-                  style={styles.inputCantidad}
-                  keyboardType="numeric"
-                  value={(cantidadSeleccionada[item.id] || 0).toString()}
-                  onChangeText={(text) => {
-                    const nuevaCantidad = parseInt(text) || 0;
-                    const diferencia = nuevaCantidad - (cantidadSeleccionada[item.id] || 0);
-                    setCantidadSeleccionada(prev => ({ ...prev, [item.id]: nuevaCantidad }));
-                    setSubtotal(prev => prev + diferencia * item.precio);
-                  }}
-                />
-                <Button title="+" onPress={() => incrementar(item.id, item.precio)} />
+      
+        <Text style={styles.titulo}>Selecciona las prendas</Text>
+        <FlatList
+          data={prendas}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.itemRow}>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.nombre}>{item.nombre}</Text>
+                  <Text style={styles.precio}>Precio: ${item.precio}</Text>
+                </View>
+                <View style={styles.controles}>
+                  <TouchableOpacity
+                    style={styles.botonCircular}
+                    onPress={() => decrementar(item.id, item.precio)}
+                  >
+                    <AntDesign name="minus" size={20} color="#004AAD" />
+                  </TouchableOpacity>
+
+                  <TextInput
+                    mode="outlined"
+                    keyboardType="numeric"
+                    dense
+                    style={styles.inputCantidad}
+                    value={(cantidadSeleccionada[item.id] || 0).toString()}
+                    outlineStyle={{
+                      borderRadius: 20,
+                      borderColor: '#fff',
+                      textAlign: 'center',          // ← Centrado horizontal
+                      textAlignVertical: 'center',  // ← Centrado vertical (solo Android)
+                    }}
+                    onChangeText={(text) => {
+                      const nuevaCantidad = parseInt(text) || 0;
+                      const diferencia = nuevaCantidad - (cantidadSeleccionada[item.id] || 0);
+                      setCantidadSeleccionada(prev => ({ ...prev, [item.id]: nuevaCantidad }));
+                      setSubtotal(prev => prev + diferencia * item.precio);
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.botonCircular}
+                    onPress={() => incrementar(item.id, item.precio)}
+                  >
+                    <AntDesign name="plus" size={20} color="#004AAD" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        )}
-      />
-      <Text style={styles.subtotal}>Subtotal: ${subtotal.toFixed(2)}</Text>
-      <Button title="Continuar" onPress={continuar} />
+          )}
+        />
+      {/* Footer fijo */}
+      <View style={styles.footer}>
+        <Text style={styles.subtotal}>Subtotal:</Text>
+        <Text style={styles.priceSubtotal}>${subtotal.toFixed(2)}</Text>
+        <TouchableOpacity style={styles.botonContinuar} onPress={continuar}>
+          <Text style={styles.textoContinuar}>Continuar</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 };
@@ -149,6 +179,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#fff',
   },
   titulo: {
     fontSize: 22,
@@ -159,14 +190,21 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f2f2f2',
+    backgroundColor: 'white',
     padding: 12,
     borderRadius: 10,
-    marginBottom: 12,
+    marginBottom: 10,
     alignItems: 'center',
-    elevation: 2,
+    elevation: 1,
+    height: 60,
+
   },
-  infoContainer: {
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemInfo: {
     flex: 1,
   },
   nombre: {
@@ -174,62 +212,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   precio: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
+    fontSize: 14,
+    color: '#555',
   },
   controles: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
   inputCantidad: {
-    width: 50,
-    height: 35,
-    marginHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    textAlign: 'center',
-    fontSize: 16,
+    backgroundColor: "#fff",
+    width: 40,
+    fontSize: 18,
+    marginHorizontal: 4,
+  },
+  botonCircular: {
+    padding: 4,
+    borderRadius: 50,
+    backgroundColor: '#edf5ff'
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100, // Espacio para no tapar contenido con el footer
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    elevation: 10,
   },
   subtotal: {
-    fontSize: 20,
+    fontSize: 18,
+    color: '#333',
+  },
+  priceSubtotal:{
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 16,
-    textAlign: 'center',
+    color: '#333',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  botonContinuar: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
   },
-  itemRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-itemInfo: {
-  flex: 1,
-},
-precio: {
-  fontSize: 14,
-  color: '#555',
-},
-controles: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 6,
-},
-inputCantidad: {
-  width: 40,
-  height: 50,
-  textAlign: 'center',
-  borderColor: '#ccc',
-  borderWidth: 1,
-  borderRadius: 4,
-  marginHorizontal: 6,
-  backgroundColor: '#fff',
-},
-
+  textoContinuar: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
