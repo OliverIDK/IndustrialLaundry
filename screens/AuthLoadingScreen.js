@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
-  Image,
   Animated,
   StyleSheet,
   Dimensions,
 } from "react-native";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from "../src/config/fb";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import * as Notifications from "expo-notifications";
 
 const { height, width } = Dimensions.get("window");
 const BUBBLE_COUNT = 8;
@@ -104,6 +104,31 @@ const Bubble = ({ source, duration }) => {
   );
 };
 
+async function saveTokenIfNotExists(uid) {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Permiso para notificaciones no otorgado");
+      return;
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const pushToken = tokenData.data;
+
+    const tokenRef = doc(database, "tokens", uid);
+    const tokenSnap = await getDoc(tokenRef);
+
+    if (!tokenSnap.exists()) {
+      await setDoc(tokenRef, { uid, token: pushToken });
+      console.log("Token guardado para usuario cliente:", uid);
+    } else {
+      console.log("Token ya registrado para usuario cliente:", uid);
+    }
+  } catch (error) {
+    console.error("Error guardando token de notificación:", error);
+  }
+}
+
 const AuthLoadingScreen = ({ navigation }) => {
   const logoScale = useRef(new Animated.Value(1)).current;
 
@@ -125,48 +150,46 @@ const AuthLoadingScreen = ({ navigation }) => {
   }, [logoScale]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        getDoc(doc(database, "usuarios", user.uid))
-          .then((userDoc) => {
-            if (userDoc.exists()) {
-              const datos = userDoc.data();
-              console.log("Usuario autenticado con rol:", datos.rol);
+        try {
+          const userDoc = await getDoc(doc(database, "usuarios", user.uid));
+          if (userDoc.exists()) {
+            const datos = userDoc.data();
+            console.log("Usuario autenticado con rol:", datos.rol);
 
-              setTimeout(() => {
-                switch (datos.rol) {
-                  case "Administrador":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupAdmin" }] });
-                    break;
-                  case "Auxiliar":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupAuxiliar" }] });
-                    break;
-                  case "Lavador":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupLavador" }] });
-                    break;
-                  case "Supervisor":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupSupervisor" }] });
-                    break;
-                  case "Chofer":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupChofer" }] });
-                    break;
-                  case "Cliente":
-                    navigation.reset({ index: 0, routes: [{ name: "TabGroupCliente" }] });
-                    break;
-                  default:
-                    console.warn("Rol no reconocido:", datos.rol);
-                    navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-                }
-              }, 1000);
-            } else {
-              console.warn("No existe el documento del usuario");
-              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+            switch (datos.rol) {
+              case "Administrador":
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupAdmin" }] });
+                break;
+              case "Auxiliar":
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupAuxiliar" }] });
+                break;
+              case "Lavador":
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupLavador" }] });
+                break;
+              case "Supervisor":
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupSupervisor" }] });
+                break;
+              case "Chofer":
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupChofer" }] });
+                break;
+              case "Cliente":
+                await saveTokenIfNotExists(user.uid);
+                navigation.reset({ index: 0, routes: [{ name: "TabGroupCliente" }] });
+                break;
+              default:
+                console.warn("Rol no reconocido:", datos.rol);
+                navigation.reset({ index: 0, routes: [{ name: "Login" }] });
             }
-          })
-          .catch((error) => {
-            console.error("Error al obtener el usuario:", error);
+          } else {
+            console.warn("No existe el documento del usuario");
             navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-          });
+          }
+        } catch (error) {
+          console.error("Error al obtener el usuario:", error);
+          navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+        }
       } else {
         console.log("No hay usuario autenticado");
         setTimeout(() => {
@@ -221,5 +244,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     zIndex: 1,
+    
   },
 });

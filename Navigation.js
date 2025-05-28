@@ -33,6 +33,7 @@ import Cliente from "./screens/Cliente";
 import NotasCliente from "./screens/NotasCliente";
 import Steps from "./screens/Steps";
 import EditarUsuario from "./screens/EditarUsuario";
+import NotasChofer from "./screens/NotasChofer";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -433,7 +434,7 @@ function TabGroupChofer() {
             iconName = "home";
           } else if (route.name == "Usuarios") {
             iconName = "users";
-          } else if (route.name == "Tabs") {
+          } else if (route.name == "NotasChofer") {
             iconName = "inbox";
           } else if (route.name == "Inventario") {
             iconName = "clipboard";
@@ -446,7 +447,7 @@ function TabGroupChofer() {
         },
       })}
     >
-      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="NotasChofer" component={NotasChofer} options={{ title: "NotasChofer" }} />
       <Tab.Screen name="Inventario" component={Inventario} />
       <Tab.Screen name="GPS" component={GPS} />
       <Tab.Screen name="Configuracion" component={Configuracion} />

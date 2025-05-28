@@ -13,7 +13,6 @@ const NotasCliente = ({ navigation }) => {
         const user = auth.currentUser;
         if (!user) return;
 
-        // Obtener notas filtrando por cliente.uid
         const notasRef = collection(database, 'notas');
         const qNotas = query(notasRef, where('cliente.uid', '==', user.uid));
         const notasSnap = await getDocs(qNotas);
