@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { database } from '../src/config/fb'; // Asegúrate de que esta ruta sea correcta
 import { collection, addDoc } from 'firebase/firestore'; // Para agregar documentos
 import { TextInput } from "react-native-paper";
@@ -43,9 +43,9 @@ const AgregarPrenda = ({ navigation }) => {
     <View style={styles.container}>
 
       <View style={{ alignItems: "center", marginBottom: 20 }}>
-        <TouchableOpacity style={styles.fotoUser} onPress={pickImage}>
+        <TouchableOpacity style={styles.fotoUser}>
             <Image
-              source={require("../src/Assets/Imagenes/usuario.png")}
+              source={require("../src/Assets/Imagenes/cargar.png")}
               style={styles.avatarImage}
             />
       
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    justifyContent: 'center',
     backgroundColor: 'white',
   },
   label: {
@@ -147,6 +146,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  fotoUser: {
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#C5E0FF",
+    width: 150,
+    height: 125,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+   avatarImage: {
+    marginTop: 7,
+    width: 152,
+    resizeMode: "contain",
   },
 
 });
