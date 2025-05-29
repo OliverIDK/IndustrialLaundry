@@ -2,16 +2,17 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Button,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
-  Alert
+  Alert,
+  Button,
+  TouchableOpacity,
 } from "react-native";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
-import { doc, deleteDoc } from "firebase/firestore";
-import { Menu, IconButton, Provider } from "react-native-paper";
+import { SwipeListView } from "react-native-swipe-list-view";
+import { MaterialIcons } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 
 const eliminarProducto = async (id) => {
   try {
@@ -23,12 +24,9 @@ const eliminarProducto = async (id) => {
 };
 
 const Inventario = ({ navigation }) => {
-  const [visibleMenuId, setVisibleMenuId] = useState(null);
-
-  const abrirMenu = (id) => setVisibleMenuId(id);
-  const cerrarMenu = () => setVisibleMenuId(null);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const obtenerProductos = () => {
     const inventarioRef = collection(database, "inventario");
     onSnapshot(
@@ -52,6 +50,59 @@ const Inventario = ({ navigation }) => {
     obtenerProductos();
   }, []);
 
+  const renderItem = (data) => {
+    const producto = data.item;
+    const iconoStock =
+      producto.cantidad_actual <= 3 ? (
+        <MaterialIcons name="trending-down" size={28} color="red" />
+      ) : (
+        <MaterialIcons name="trending-up" size={28} color="green" />
+      );
+
+    return (
+      <View style={styles.rowFront}>
+        <View>
+          <Text style={styles.nombre}>{producto.nombre}</Text>
+          <Text>Cantidad: {producto.cantidad_actual}</Text>
+          <Text>Medida: {producto.medida}</Text>
+        </View>
+        <View>{iconoStock}</View>
+      </View>
+    );
+  };
+
+  const renderHiddenItem = (data) => (
+    <View style={styles.rowBack}>
+      <TouchableOpacity
+        style={[styles.backButton, { backgroundColor: "#ccc" }]}
+        onPress={() =>
+          navigation.navigate("EditarProducto", { producto: data.item })
+        }
+      >
+        <AntDesign name="edit" size={24} color="white" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.backButton, { backgroundColor: "#ccc" }]}
+        onPress={() =>
+          Alert.alert(
+            "¿Eliminar producto?",
+            `¿Estás seguro de que deseas eliminar "${data.item.nombre}"?`,
+            [
+              { text: "Cancelar", style: "cancel" },
+              {
+                text: "Eliminar",
+                style: "destructive",
+                onPress: () => eliminarProducto(data.item.id),
+              },
+            ]
+          )
+        }
+      >
+        <AntDesign name="delete" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -64,67 +115,20 @@ const Inventario = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inventario</Text>
-
-      <FlatList
+      <SwipeListView
         data={productos}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.producto}>
-            <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <View>
-                <Text style={styles.nombre}>{item.nombre}</Text>
-                <Text>Cantidad: {item.cantidad_actual}</Text>
-                <Text>Medida: {item.medida}</Text>
-              </View>
-
-              <Menu
-                visible={visibleMenuId === item.id}
-                onDismiss={cerrarMenu}
-                anchor={
-                  <IconButton
-                    icon="dots-vertical"
-                    size={24}
-                    onPress={() => abrirMenu(item.id)}
-                  />
-                }
-              >
-                <Menu.Item
-                  onPress={() => {
-                    cerrarMenu();
-                    navigation.navigate("EditarProducto", { producto: item });
-                  }}
-                  title="Editar"
-                />
-                <Menu.Item
-                  onPress={() => {
-                    cerrarMenu();
-                    Alert.alert(
-                      "¿Eliminar producto?",
-                      `¿Estás seguro de que deseas eliminar "${item.nombre}"?`,
-                      [
-                        { text: "Cancelar", style: "cancel" },
-                        {
-                          text: "Eliminar",
-                          style: "destructive",
-                          onPress: () => eliminarProducto(item.id),
-                        },
-                      ]
-                    );
-                  }}
-                  title="Eliminar"
-                />
-              </Menu>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
+        renderHiddenItem={renderHiddenItem}
+        rightOpenValue={-150}
+        disableRightSwipe
       />
-
-      <Button
-        title="Agregar Producto"
+      <TouchableOpacity
+        style={styles.boton}
         onPress={() => navigation.navigate("AgregarProducto")}
-      />
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -135,18 +139,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    paddingTop: 40,
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
     textAlign: "center",
+    fontWeight: "bold",
   },
-  producto: {
+  rowFront: {
+    backgroundColor: "white",
+    borderRadius: 10,
     padding: 12,
-    marginBottom: 12,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 8,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 1,
+  },
+  rowBack: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 10,
+    borderRadius: 10,
+  },
+  backButton: {
+    width: 75,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    elevation: 2,
   },
   nombre: {
     fontSize: 18,
@@ -157,11 +181,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  producto: {
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 8,
-    flexDirection: "column",
+  boton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#004AAD",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+    elevation: 2,
   },
 });

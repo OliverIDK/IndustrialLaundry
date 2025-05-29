@@ -280,11 +280,12 @@ const styles = StyleSheet.create({
   botonContinuar: {
     marginTop: 100,
     backgroundColor: "#2196F3",
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 15,
+    borderRadius: 10,
     elevation: 2,
-    width: '100%',
+    width: "100%",
+    alignItems: "center",
   },
   textoContinuar: {
     color: "#fff",

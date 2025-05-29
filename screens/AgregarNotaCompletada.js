@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     width: "100%",
+    elevation: 2, 
     alignItems: "center",
   },
   buttonText: {
