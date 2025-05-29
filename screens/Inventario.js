@@ -150,8 +150,9 @@ const styles = StyleSheet.create({
   },
   rowFront: {
     backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 20,
     padding: 12,
+    paddingLeft: 19,
     marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -166,8 +167,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#e9ecfd",
     marginBottom: 10,
-    borderRadius: 10,
-    paddingRight: 12,
+    borderRadius: 20,
+    paddingRight: 20,
     height: 80, // <-- misma altura
     gap: 10,
     
