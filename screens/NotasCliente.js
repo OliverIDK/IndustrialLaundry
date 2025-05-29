@@ -17,10 +17,13 @@ const NotasCliente = ({ navigation }) => {
         const qNotas = query(notasRef, where('cliente.uid', '==', user.uid));
         const notasSnap = await getDocs(qNotas);
 
-        const notasData = notasSnap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const notasData = notasSnap.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          // Filtramos para no incluir las notas con estado "Entregada"
+          .filter(nota => nota.estado !== 'Entregado');
 
         setNotas(notasData);
       } catch (error) {

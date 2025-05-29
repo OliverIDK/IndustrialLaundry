@@ -7,7 +7,15 @@ import {
 } from "react-native";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from "../src/config/fb";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc
+} from "firebase/firestore";
 import * as Notifications from "expo-notifications";
 
 const { height, width } = Dimensions.get("window");
@@ -25,7 +33,6 @@ const Bubble = ({ source, duration }) => {
   useEffect(() => {
     const animate = () => {
       setStartX(30 + Math.random() * (width - 90));
-
       translateY.setValue(height + Math.random() * 50);
       translateX.setValue(0);
       opacity.setValue(0.8);
@@ -115,14 +122,15 @@ async function saveTokenIfNotExists(uid) {
     const tokenData = await Notifications.getExpoPushTokenAsync();
     const pushToken = tokenData.data;
 
-    const tokenRef = doc(database, "tokens", uid);
-    const tokenSnap = await getDoc(tokenRef);
+    const tokensRef = collection(database, "tokens");
+    const q = query(tokensRef, where("uid", "==", uid), where("token", "==", pushToken));
+    const existing = await getDocs(q);
 
-    if (!tokenSnap.exists()) {
-      await setDoc(tokenRef, { uid, token: pushToken });
+    if (existing.empty) {
+      await addDoc(tokensRef, { uid, token: pushToken });
       console.log("Token guardado para usuario cliente:", uid);
     } else {
-      console.log("Token ya registrado para usuario cliente:", uid);
+      console.log("Token ya registrado para este usuario cliente:", uid);
     }
   } catch (error) {
     console.error("Error guardando token de notificación:", error);
@@ -244,6 +252,5 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     zIndex: 1,
-    
   },
 });

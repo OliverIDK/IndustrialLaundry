@@ -34,6 +34,7 @@ import NotasCliente from "./screens/NotasCliente";
 import Steps from "./screens/Steps";
 import EditarUsuario from "./screens/EditarUsuario";
 import NotasChofer from "./screens/NotasChofer";
+import NotasLavador from "./screens/NotasLavador";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -345,7 +346,7 @@ function TabGroupLavador() {
             iconName = "home";
           } else if (route.name == "Usuarios") {
             iconName = "users";
-          } else if (route.name == "Tabs") {
+          } else if (route.name == "Notas") {
             iconName = "inbox";
           } else if (route.name == "Inventario") {
             iconName = "clipboard";
@@ -358,19 +359,8 @@ function TabGroupLavador() {
         },
       })}
     >
-      <Tab.Screen
-        name="Servicios"
-        component={TapsService}
-        options={{ title: "Servicios" }}
-      />
-      <Tab.Screen
-        name="Usuarios"
-        component={Usuarios}
-        options={{ title: "Usuarios" }}
-      />
-      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Notas" component={NotasLavador} />
       <Tab.Screen name="Inventario" component={Inventario} />
-      <Tab.Screen name="GPS" component={GPS} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );
@@ -430,16 +420,8 @@ function TabGroupChofer() {
         tabBarActiveTintColor: "#144E78",
         tabBarIcon: ({ color, focused, size }) => {
           let iconName;
-          if (route.name == "Servicios") {
-            iconName = "home";
-          } else if (route.name == "Usuarios") {
-            iconName = "users";
-          } else if (route.name == "NotasChofer") {
+           if (route.name == "NotasChofer") {
             iconName = "inbox";
-          } else if (route.name == "Inventario") {
-            iconName = "clipboard";
-          } else if (route.name == "GPS") {
-            iconName = "location-pin";
           } else if (route.name == "Configuracion") {
             iconName = "cog";
           }
@@ -448,8 +430,6 @@ function TabGroupChofer() {
       })}
     >
       <Tab.Screen name="NotasChofer" component={NotasChofer} options={{ title: "NotasChofer" }} />
-      <Tab.Screen name="Inventario" component={Inventario} />
-      <Tab.Screen name="GPS" component={GPS} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );

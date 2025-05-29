@@ -7,32 +7,36 @@ import {
   TouchableOpacity,
   Modal,
   Button,
-  Alert
+  Alert,
 } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import {
   collection,
-  getDocs,
   query,
   where,
   doc,
-  updateDoc
+  updateDoc,
+  onSnapshot,
 } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 import { database } from '../src/config/fb'
 
 // Función para enviar notificación al backend
 const enviarNotificacion = async (uid, estado) => {
   try {
-    const response = await fetch('https://005e5364-527c-403d-b670-2d6b9e6b61d5-00-1uk2rcqp51d99.kirk.replit.dev/enviar-notificacion', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        uid: uid,
-        status: estado
-      })
-    })
+    const response = await fetch(
+      'https://005e5364-527c-403d-b670-2d6b9e6b61d5-00-1uk2rcqp51d99.kirk.replit.dev/enviar-notificacion',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: uid,
+          status: estado,
+        }),
+      }
+    )
 
     const data = await response.json()
     console.log('Notificación enviada:', data)
@@ -48,30 +52,37 @@ const NotasChofer = () => {
   const [notaSeleccionada, setNotaSeleccionada] = useState(null)
 
   useEffect(() => {
-    const fetchNotas = async () => {
-      try {
-        const notasRef = collection(database, 'notas')
-        const q = query(
-          notasRef,
-          where('estado', 'in', ['Listo para entrega', 'En camino'])
-        )
-        const snapshot = await getDocs(q)
+    const auth = getAuth()
+    const user = auth.currentUser
+    if (!user) return
+
+    const notasRef = collection(database, 'notas')
+    const q = query(
+      notasRef,
+      where('estado', 'in', ['Listo para entrega', 'En camino']),
+      where('chofer.uid', '==', user.uid)
+    )
+
+    const unsubscribe = onSnapshot(
+      q,
+      snapshot => {
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }))
         setNotas(data)
-      } catch (error) {
-        console.error('Error al obtener notas:', error)
-      } finally {
+        setLoading(false)
+      },
+      error => {
+        console.error('Error al escuchar notas:', error)
         setLoading(false)
       }
-    }
+    )
 
-    fetchNotas()
+    return () => unsubscribe()
   }, [])
 
-  const cambiarEstado = async (nuevoEstado) => {
+  const cambiarEstado = async nuevoEstado => {
     if (!notaSeleccionada) return
 
     try {
@@ -79,17 +90,10 @@ const NotasChofer = () => {
       await updateDoc(notaRef, { estado: nuevoEstado })
 
       // Enviar notificación al cliente
-      const uidCliente = notaSeleccionada?.cliente?.id
+      const uidCliente = notaSeleccionada?.cliente?.uid
       if (uidCliente) {
         await enviarNotificacion(uidCliente, nuevoEstado)
       }
-
-      // Actualizar estado en local
-      setNotas(prev =>
-        prev.map(n =>
-          n.id === notaSeleccionada.id ? { ...n, estado: nuevoEstado } : n
-        )
-      )
 
       Alert.alert('Éxito', `Estado actualizado a "${nuevoEstado}"`)
       setModalVisible(false)
@@ -106,10 +110,10 @@ const NotasChofer = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Notas del Chofer</Text>
+      <Text style={styles.title}>Notas asignadas</Text>
       <FlatList
         data={notas}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.notaItem}
@@ -120,7 +124,7 @@ const NotasChofer = () => {
           >
             <Text style={styles.nombre}>{item.cliente?.nombre}</Text>
             <Text style={styles.direccion}>{item.cliente?.direccion}</Text>
-            <Text style={styles.estado}>{item.estado}</Text>
+            <Text style={styles.estado}>Estado: {item.estado}</Text>
           </TouchableOpacity>
         )}
       />
@@ -182,50 +186,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 12
+    marginBottom: 12,
   },
   notaItem: {
     backgroundColor: '#f1f1f1',
     padding: 12,
     marginVertical: 6,
-    borderRadius: 8
+    borderRadius: 8,
   },
   nombre: {
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   direccion: {
-    fontSize: 14
+    fontSize: 14,
+    color: '#333',
   },
   estado: {
     fontSize: 14,
-    color: '#555'
+    color: '#555',
   },
   modalBackground: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   modalContainer: {
     backgroundColor: 'white',
     padding: 20,
     width: '80%',
     borderRadius: 8,
-    elevation: 10
+    elevation: 10,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10
+    marginBottom: 10,
   },
   modalSubtitle: {
     fontSize: 16,
-    marginBottom: 10
-  }
+    marginBottom: 10,
+  },
 })

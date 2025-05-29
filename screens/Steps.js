@@ -4,8 +4,8 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert, ScrollView } from 'rea
 const estados = [
   'Recibido',
   'En Lavado',
-  'En secado',
-  'Planchado y Doblado',
+  'En Secado',
+  'En Planchado y/o Doblado',
   'Listo para entrega',
   'En camino',
   'Entregado',
