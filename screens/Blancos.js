@@ -7,16 +7,22 @@ import {
   ImageBackground,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { useNavigation } from "@react-navigation/native";
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign } from "@expo/vector-icons";
 import { TextInput } from "react-native-paper";
 import { useFonts } from "expo-font";
-import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Modal, Pressable } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-
 
 const Blancos = () => {
   const [notas, setNotas] = useState([]);
@@ -29,14 +35,12 @@ const Blancos = () => {
   const [notaSeleccionada, setNotaSeleccionada] = useState(null);
 
   const [fontsLoaded] = useFonts({
-    'Quicksand-Regular': require('../src/Assets/fonts/Quicksand-Regular.ttf'),
-    'Quicksand-SemiBold': require('../src/Assets/fonts/Quicksand-SemiBold.ttf'),
-    'Raleway-Regular': require('../src/Assets/fonts/Raleway-Regular.ttf'),
-    'Montserrat-Regular': require('../src/Assets/fonts/Montserrat-Regular.ttf'),
-    'Poppins-Regular': require('../src/Assets/fonts/Poppins-Regular.ttf'),
+    "Quicksand-Regular": require("../src/Assets/fonts/Quicksand-Regular.ttf"),
+    "Quicksand-SemiBold": require("../src/Assets/fonts/Quicksand-SemiBold.ttf"),
+    "Raleway-Regular": require("../src/Assets/fonts/Raleway-Regular.ttf"),
+    "Montserrat-Regular": require("../src/Assets/fonts/Montserrat-Regular.ttf"),
+    "Poppins-Regular": require("../src/Assets/fonts/Poppins-Regular.ttf"),
   });
-
-
 
   const filtrarNotas = () => {
     if (busqueda.trim() === "") return notas;
@@ -50,9 +54,9 @@ const Blancos = () => {
   const obtenerProgreso = (estado, metodoEntrega) => {
     const ESTADOS_DELIVERY = [
       "Recibido",
-      "En lavado",
-      "En secado",
-      "En planchado y/o doblado",
+      "En Lavado",
+      "En Secado",
+      "En Planchado y/o Doblado",
       "Listo para entrega",
       "En camino",
       "Entregado",
@@ -60,14 +64,15 @@ const Blancos = () => {
 
     const ESTADOS_PICKUP = [
       "Recibido",
-      "En lavado",
-      "En secado",
-      "En planchado y/o doblado",
+      "En Lavado",
+      "En Secado",
+      "En Planchado y/o Doblado",
       "Listo para entrega",
       "Entregado",
     ];
 
-    const estados = metodoEntrega === "Delivery" ? ESTADOS_DELIVERY : ESTADOS_PICKUP;
+    const estados =
+      metodoEntrega === "Delivery" ? ESTADOS_DELIVERY : ESTADOS_PICKUP;
     const index = estados.indexOf(estado);
 
     if (index === -1) return 0; // Estado no encontrado
@@ -75,8 +80,6 @@ const Blancos = () => {
     const porcentajePorEstado = 100 / (estados.length - 1); // -1 para que el último sea 100%
     return Math.round(index * porcentajePorEstado);
   };
-
-
 
   // Obtener tipos de lavado
   useEffect(() => {
@@ -127,9 +130,7 @@ const Blancos = () => {
         {item.cliente?.nombre || "Cliente"}
       </Text>
 
-      <Text style={styles.texto}>
-        Fecha: {formatearFecha(item.fecha)}
-      </Text>
+      <Text style={styles.texto}>Fecha: {formatearFecha(item.fecha)}</Text>
 
       <Text style={styles.texto}>
         Lavado: {tiposLavado[item.tipoLavadoId] || "Sin especificar"}
@@ -170,7 +171,9 @@ const Blancos = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+      >
         <TextInput
           mode="outlined"
           placeholder="Buscar nota"
@@ -204,17 +207,21 @@ const Blancos = () => {
           onPress={() => {
             console.log("Filtrar presionado");
           }}
-          style={{ marginLeft: 15, marginRight: 15, marginTop: -12, padding: 5 }}
+          style={{
+            marginLeft: 15,
+            marginRight: 15,
+            marginTop: -12,
+            padding: 5,
+          }}
         >
           <ImageBackground
-            source={require('../src/Assets/Imagenes/filtrar.png')}
+            source={require("../src/Assets/Imagenes/filtrar.png")}
             style={{
               width: 25,
               height: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
+              justifyContent: "center",
+              alignItems: "center",
               margin: 2,
-
             }}
             resizeMode="contain"
           />
@@ -242,52 +249,55 @@ const Blancos = () => {
           <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              justifyContent: 'center',
-              alignItems: 'center'
+              backgroundColor: "rgba(0,0,0,0.3)",
+              justifyContent: "center",
+              alignItems: "center",
             }}
             onPress={() => setModalVisible(false)} // 👉 cerrar al hacer clic fuera
           >
             <Pressable
               style={{
-                backgroundColor: 'white',
+                backgroundColor: "white",
                 borderRadius: 12,
                 padding: 20,
-                width: '80%',
-                alignItems: 'center',
+                width: "80%",
+                alignItems: "center",
                 elevation: 5,
               }}
-              onPress={() => { }} // 👉 evitar que el clic dentro cierre el modal
+              onPress={() => {}} // 👉 evitar que el clic dentro cierre el modal
             >
-              <Text style={{
-                fontSize: 16,
-                fontFamily: 'Quicksand-SemiBold',
-                marginBottom: 10
-              }}>Cambiar estado</Text>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Quicksand-SemiBold",
+                  marginBottom: 10,
+                }}
+              >
+                Cambiar estado
+              </Text>
 
               <Picker
                 selectedValue={estadoSeleccionado}
                 onValueChange={(itemValue) => setEstadoSeleccionado(itemValue)}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
               >
-                {(
-                  notaSeleccionada.metodoEntrega === "Delivery"
-                    ? [
+                {(notaSeleccionada.metodoEntrega === "Delivery"
+                  ? [
                       "Recibido",
-                      "En lavado",
-                      "En secado",
-                      "En planchado y/o doblado",
+                      "En Lavado",
+                      "En Secado",
+                      "En Planchado y/o Doblado",
                       "Listo para entrega",
                       "En camino",
-                      "Entregado"
+                      "Entregado",
                     ]
-                    : [
+                  : [
                       "Recibido",
-                      "En lavado",
-                      "En secado",
-                      "En planchado y/o doblado",
+                      "En Lavado",
+                      "En Secado",
+                      "En Planchado y/o Doblado",
                       "Listo para entrega",
-                      "Entregado"
+                      "Entregado",
                     ]
                 ).map((estado, idx) => (
                   <Picker.Item key={idx} label={estado} value={estado} />
@@ -296,7 +306,7 @@ const Blancos = () => {
 
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#004AAD',
+                  backgroundColor: "#004AAD",
                   paddingVertical: 8,
                   paddingHorizontal: 16,
                   borderRadius: 10,
@@ -314,12 +324,15 @@ const Blancos = () => {
                   }
                 }}
               >
-                <Text style={{ color: 'white', fontFamily: 'Quicksand-Regular' }}>Guardar</Text>
+                <Text
+                  style={{ color: "white", fontFamily: "Quicksand-Regular" }}
+                >
+                  Guardar
+                </Text>
               </TouchableOpacity>
             </Pressable>
           </Pressable>
         </Modal>
-
       )}
 
       <TouchableOpacity
@@ -331,7 +344,6 @@ const Blancos = () => {
     </View>
   );
 };
-
 
 export default Blancos;
 
@@ -354,7 +366,7 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 150,
     justifyContent: "space-between",
-    borderColor: '#c0c0c0',
+    borderColor: "#c0c0c0",
     borderWidth: 1.2,
   },
   tituloCliente: {
@@ -404,16 +416,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
-  }, estadoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  estadoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 10,
     gap: 8, // o usa marginRight en el círculo si gap no funciona
   },
   estadoTextoExterno: {
     fontSize: 12,
-    color: '#004AAD',
-    fontFamily: 'Quicksand-Medium',
+    color: "#004AAD",
+    fontFamily: "Quicksand-Medium",
   },
-
 });

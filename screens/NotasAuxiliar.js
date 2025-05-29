@@ -23,7 +23,7 @@ import { useFonts } from "expo-font";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Picker } from "@react-native-picker/picker";
 
-const NotasLavador = () => {
+const NotasAuxiliar = () => {
   const [notas, setNotas] = useState([]);
   const [tiposLavado, setTiposLavado] = useState({});
   const navigation = useNavigation();
@@ -50,7 +50,7 @@ const NotasLavador = () => {
       setTiposLavado(tipos);
     });
 
-    const estadosFiltro = ["Recibido", "En Lavado", "En Secado"];
+    const estadosFiltro = ["En Planchado y/o Doblado", "En Secado"];
     const notasRef = query(
       collection(database, "notas"),
       where("estado", "in", estadosFiltro)
@@ -238,7 +238,7 @@ const NotasLavador = () => {
                 onValueChange={(itemValue) => setEstadoSeleccionado(itemValue)}
                 style={{ width: "100%" }}
               >
-                {["En Lavado", "En Secado", "En Planchado y/o Doblado"].map(
+                {["En Planchado y/o Doblado", "Listo para entrega"].map(
                   (estado) => (
                     <Picker.Item key={estado} label={estado} value={estado} />
                   )
@@ -281,7 +281,7 @@ const NotasLavador = () => {
   );
 };
 
-export default NotasLavador;
+export default NotasAuxiliar;
 
 const styles = StyleSheet.create({
   container: {
@@ -296,11 +296,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     flex: 1,
     marginHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
     minWidth: 150,
   },
   tituloCliente: {
@@ -326,21 +321,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#555",
   },
-  estadoContainer: {
-    marginTop: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10, // opcional, espacio entre barrita y texto (puedes ajustar)
-  },
+estadoContainer: {
+  marginTop: 12,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  flexWrap: "wrap",
+},
+estadoTextoExterno: {
+  maxWidth: 80,
+  fontSize: 12,
+  color: "#004AAD",
+  fontWeight: "bold",
+  textAlign: "center",
+},
 
-  estadoTextoExterno: {
-    marginTop: 5,
-    fontSize: 14,
-    color: "#004AAD",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
   vacio: {
     fontSize: 16,
     textAlign: "center",

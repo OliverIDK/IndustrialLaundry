@@ -35,6 +35,7 @@ import Steps from "./screens/Steps";
 import EditarUsuario from "./screens/EditarUsuario";
 import NotasChofer from "./screens/NotasChofer";
 import NotasLavador from "./screens/NotasLavador";
+import NotasAuxiliar from "./screens/NotasAuxiliar";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -313,20 +314,8 @@ function TabGroupAuxiliar() {
           return <Icon name={iconName} color={color} size={size} />;
         },
       })}
-    >
-      <Tab.Screen
-        name="Servicios"
-        component={TapsService}
-        options={{ title: "Servicios" }}
-      />
-      <Tab.Screen
-        name="Usuarios"
-        component={Usuarios}
-        options={{ title: "Usuarios" }}
-      />
-      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
-      <Tab.Screen name="Inventario" component={Inventario} />
-      <Tab.Screen name="GPS" component={GPS} />
+    ><Tab.Screen name="Servicios" component={Taps} options={{title: "Crear"}}/>
+      <Tab.Screen name="Tabs" component={NotasAuxiliar} options={{ title: "Notas" }} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );

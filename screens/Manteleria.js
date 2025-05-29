@@ -51,9 +51,9 @@ const Manteleria = () => {
   const obtenerProgreso = (estado, metodoEntrega) => {
     const ESTADOS_DELIVERY = [
       "Recibido",
-      "En lavado",
-      "En secado",
-      "En planchado y/o doblado",
+      "En Lavado",
+      "En Secado",
+      "En Planchado y/o Doblado",
       "Listo para entrega",
       "En camino",
       "Entregado",
@@ -61,9 +61,9 @@ const Manteleria = () => {
 
     const ESTADOS_PICKUP = [
       "Recibido",
-      "En lavado",
-      "En secado",
-      "En planchado y/o doblado",
+      "En Lavado",
+      "En Secado",
+      "En Planchado y/o Doblado",
       "Listo para entrega",
       "Entregado",
     ];
@@ -275,20 +275,20 @@ const Manteleria = () => {
                   notaSeleccionada.metodoEntrega === "Delivery"
                     ? [
                       "Recibido",
-                      "En lavado",
-                      "En secado",
-                      "En planchado y/o doblado",
+                      "En Lavado",
+                      "En Secado",
+                      "En Planchado y/o Doblado",
                       "Listo para entrega",
                       "En camino",
-                      "Entregado"
+                      "Entregado",
                     ]
-                    : [
+                  : [
                       "Recibido",
-                      "En lavado",
-                      "En secado",
-                      "En planchado y/o doblado",
+                      "En Lavado",
+                      "En Secado",
+                      "En Planchado y/o Doblado",
                       "Listo para entrega",
-                      "Entregado"
+                      "Entregado",
                     ]
                 ).map((estado, idx) => (
                   <Picker.Item key={idx} label={estado} value={estado} />
