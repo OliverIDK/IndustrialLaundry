@@ -207,12 +207,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  option: {
-    padding: 8,
-    backgroundColor: '#f1f1f1',
-    marginHorizontal: 4,
-    borderRadius: 6,
-  },
+  
   label: {
     fontSize: 16,
     fontWeight: "500",

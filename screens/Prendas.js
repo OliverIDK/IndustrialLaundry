@@ -6,11 +6,13 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Alert
+  Alert,
+  TouchableOpacity,
 } from "react-native";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { Menu, IconButton } from "react-native-paper";
+import { AntDesign } from "@expo/vector-icons";
 
 const eliminarPrenda = async (id) => {
   try {
@@ -61,8 +63,7 @@ const Prendas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Prendas</Text>
-
+     
       <FlatList
         data={prendas}
         keyExtractor={(item) => item.id}
@@ -116,10 +117,12 @@ const Prendas = ({ navigation }) => {
         )}
       />
 
-      <Button
-        title="Agregar Prenda"
+      <TouchableOpacity
+        style={styles.boton}
         onPress={() => navigation.navigate("AgregarPrenda")}
-      />
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -131,6 +134,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 40,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
@@ -153,4 +157,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+   boton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#004AAD",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+    elevation: 2,
+  },
+  
 });

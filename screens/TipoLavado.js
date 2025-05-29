@@ -6,11 +6,12 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
-  Button
+  TouchableOpacity,
 } from "react-native";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { Menu, IconButton } from "react-native-paper";
+import { AntDesign } from "@expo/vector-icons";
 
 const eliminarTipo = async (id) => {
   try {
@@ -109,11 +110,12 @@ const TipoLavado = ({ navigation }) => {
           </View>
         )}
       />
-      <Button
-        title="Agregar Tipo de Lavado"
+     <TouchableOpacity
+        style={styles.boton}
         onPress={() => navigation.navigate("AgregarTipoLavado")}
-        color="#007bff"
-      />
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -125,6 +127,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 40,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
@@ -145,5 +148,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+   boton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#004AAD",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+    elevation: 2,
   },
 });

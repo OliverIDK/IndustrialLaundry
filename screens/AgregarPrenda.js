@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { database } from '../src/config/fb'; // Asegúrate de que esta ruta sea correcta
 import { collection, addDoc } from 'firebase/firestore'; // Para agregar documentos
+import { TextInput } from "react-native-paper";
 
 const AgregarPrenda = ({ navigation }) => {
   const [nombre, setNombre] = useState('');
@@ -40,16 +41,30 @@ const AgregarPrenda = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+
+      <View style={{ alignItems: "center", marginBottom: 20 }}>
+        <TouchableOpacity style={styles.fotoUser} onPress={pickImage}>
+            <Image
+              source={require("../src/Assets/Imagenes/usuario.png")}
+              style={styles.avatarImage}
+            />
+      
+        </TouchableOpacity>
+      </View>
       <Text style={styles.label}>Nombre de la prenda</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Ingrese el nombre de la prenda"
+        mode="outlined"
+        placeholder={"Ej. Toalla mano"}
         value={nombre}
         onChangeText={setNombre}
+        style={styles.input}
+        outlineStyle={{
+          borderRadius: 16,
+          borderColor: "#f1f1f1",
+        }}
       />
-
       <Text style={styles.label}>Selecciona el tipo de prenda</Text>
-      
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, tipo === "Blancos" && styles.selectedButton]}
@@ -66,8 +81,12 @@ const AgregarPrenda = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.addButton} onPress={handleAgregar}>
-        <Text style={styles.addButtonText}>Agregar Prenda</Text>
+      <TouchableOpacity
+        mode="contained"
+        onPress={handleAgregar}
+        style={styles.botonGuardar}
+      >
+        <Text style={styles.textoButton}>Guardar producto</Text>
       </TouchableOpacity>
     </View>
   );
@@ -78,19 +97,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     justifyContent: 'center',
+    backgroundColor: 'white',
   },
   label: {
     fontSize: 16,
-    marginBottom: 10,
-    textAlign: 'center',
+    fontWeight: "500",
+    marginBottom: 4,
+    color: "#333",
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: "#f1f1f1",
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -100,12 +118,15 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#ADD8E6',  // Azul claro
+    borderColor: '#aaa',
     borderRadius: 5,
     marginHorizontal: 10,
+    borderWidth: 1,
   },
   selectedButton: {
-    backgroundColor: '#4682B4',  // Azul oscuro
+    backgroundColor: '#EAF1FF',
+    borderColor: '#004AAD',
+    borderWidth: 1,
   },
   buttonText: {
     fontSize: 18,
@@ -113,18 +134,21 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     fontSize: 18,
-    color: '#fff',
+    color: '#004AAD',
   },
-  addButton: {
-    backgroundColor: '#4682B4',  // Azul oscuro
-    paddingVertical: 12,
-    borderRadius: 5,
-    alignItems: 'center',
+  botonGuardar: {
+    backgroundColor: "#004AAD",
+    borderRadius: 10,
+    height: 50,
+    justifyContent: "center",
   },
-  addButtonText: {
-    fontSize: 18,
-    color: '#fff',
+  textoButton: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
+
 });
 
 export default AgregarPrenda;

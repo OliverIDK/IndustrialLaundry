@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Button,
   TouchableOpacity,
 } from "react-native";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
@@ -115,7 +114,7 @@ const Inventario = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Inventario</Text>
+      
       <SwipeListView
         data={productos}
         keyExtractor={(item) => item.id}

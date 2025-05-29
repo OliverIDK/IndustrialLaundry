@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 40,
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,
@@ -275,4 +276,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
+  
 });
