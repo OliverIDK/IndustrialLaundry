@@ -16,8 +16,7 @@ const Steps = ({ route, navigation }) => {
   const estadoActualIndex = estados.indexOf(nota.estado);
 
   const handleVerMapa = () => {
-    Alert.alert('Ver Mapa', 'Funcionalidad de mapa aún no implementada.');
-    // navigation.navigate('Mapa', { nota });
+    navigation.navigate('Mapa');
   };
 
   return (

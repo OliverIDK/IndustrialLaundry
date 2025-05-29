@@ -365,16 +365,14 @@ function TabGroupSupervisor() {
         tabBarActiveTintColor: "#144E78",
         tabBarIcon: ({ color, focused, size }) => {
           let iconName;
-          if (route.name == "Servicios") {
+          if (route.name == "Tabs") {
             iconName = "home";
-          } else if (route.name == "Usuarios") {
-            iconName = "users";
-          } else if (route.name == "Tabs") {
+          } else if (route.name == "Lavar") {
+            iconName = "air ";
+          } else if (route.name == "Planchar") {
             iconName = "inbox";
           } else if (route.name == "Inventario") {
             iconName = "clipboard";
-          } else if (route.name == "GPS") {
-            iconName = "location-pin";
           } else if (route.name == "Configuracion") {
             iconName = "cog";
           }
@@ -382,19 +380,10 @@ function TabGroupSupervisor() {
         },
       })}
     >
-      <Tab.Screen
-        name="Servicios"
-        component={TapsService}
-        options={{ title: "Servicios" }}
-      />
-      <Tab.Screen
-        name="Usuarios"
-        component={Usuarios}
-        options={{ title: "Usuarios" }}
-      />
       <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
+      <Tab.Screen name="Lavar" component={NotasLavador} />
+      <Tab.Screen name="Planchar" component={NotasAuxiliar} />
       <Tab.Screen name="Inventario" component={Inventario} />
-      <Tab.Screen name="GPS" component={GPS} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );

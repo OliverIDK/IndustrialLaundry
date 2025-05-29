@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Button, Image, Animated } from 'react-native';
-import MapView, { Polyline } from 'react-native-maps';
+import { StyleSheet, View, Text, Button } from 'react-native';
+import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 const puntosRuta = [
@@ -16,11 +16,16 @@ const puntosRuta = [
 
 const Mapa = () => {
   const [region, setRegion] = useState(null);
-  const [location, setLocation] = useState(null);
   const mapRef = useRef(null);
 
-  const animLat = useRef(new Animated.Value(puntosRuta[0].latitude)).current;
-  const animLng = useRef(new Animated.Value(puntosRuta[0].longitude)).current;
+  const carritoCoord = useRef(
+    new AnimatedRegion({
+      latitude: puntosRuta[0].latitude,
+      longitude: puntosRuta[0].longitude,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+    })
+  ).current;
 
   const getLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -30,13 +35,9 @@ const Mapa = () => {
     }
 
     const loc = await Location.getCurrentPositionAsync({});
-    const coords = {
+    setRegion({
       latitude: loc.coords.latitude,
       longitude: loc.coords.longitude,
-    };
-    setLocation(coords);
-    setRegion({
-      ...coords,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     });
@@ -50,31 +51,26 @@ const Mapa = () => {
     for (let i = 0; i < puntosRuta.length; i++) {
       const point = puntosRuta[i];
 
-      // Animar lat y lng
       await new Promise((resolve) => {
-        Animated.parallel([
-          Animated.timing(animLat, {
-            toValue: point.latitude,
-            duration: 1000,
-            useNativeDriver: false,
-          }),
-          Animated.timing(animLng, {
-            toValue: point.longitude,
-            duration: 1000,
-            useNativeDriver: false,
-          }),
-        ]).start(() => resolve());
+        carritoCoord.timing({
+          latitude: point.latitude,
+          longitude: point.longitude,
+          duration: 1000,
+          useNativeDriver: false,
+        }).start(() => resolve());
       });
 
-      // Animar el mapa para centrar en el nuevo punto
       if (mapRef.current) {
-        mapRef.current.animateCamera({
-          center: {
-            latitude: point.latitude,
-            longitude: point.longitude,
+        mapRef.current.animateCamera(
+          {
+            center: {
+              latitude: point.latitude,
+              longitude: point.longitude,
+            },
+            zoom: 16,
           },
-          zoom: 16, // Ajusta el zoom a lo que necesites
-        }, { duration: 1000 });
+          { duration: 1000 }
+        );
       }
     }
   };
@@ -88,11 +84,13 @@ const Mapa = () => {
             style={styles.map}
             initialRegion={region}
             onRegionChangeComplete={setRegion}
+            showsUserLocation={true}
           >
             <Polyline coordinates={puntosRuta} strokeWidth={4} strokeColor="blue" />
-          </MapView>
 
-          <AnimatedCarrito lat={animLat} lng={animLng} mapRef={mapRef} region={region} />
+            {/* Marker animado sin imagen, solo pin por defecto */}
+            <Marker.Animated coordinate={carritoCoord} />
+          </MapView>
 
           <View style={styles.buttonContainer}>
             <Button title="Iniciar recorrido" onPress={iniciarRecorrido} />
@@ -101,57 +99,6 @@ const Mapa = () => {
       ) : (
         <Text style={styles.text}>Cargando mapa...</Text>
       )}
-    </View>
-  );
-};
-
-const AnimatedCarrito = ({ lat, lng, mapRef, region }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const updatePosition = async () => {
-      if (!mapRef.current || !region) return;
-
-      const coord = {
-        latitude: lat.__getValue(),
-        longitude: lng.__getValue(),
-      };
-
-      try {
-        const point = await mapRef.current.pointForCoordinate(coord);
-        setPosition({ x: point.x - 25, y: point.y - 25 }); // Ajusta para centrar el carrito
-      } catch (error) {
-        console.log('Error al convertir coordenadas:', error);
-      }
-    };
-
-    // Actualiza posición al cambiar lat o lng
-    const listenerLat = lat.addListener(updatePosition);
-    const listenerLng = lng.addListener(updatePosition);
-
-    updatePosition(); // inicial
-
-    return () => {
-      lat.removeListener(listenerLat);
-      lng.removeListener(listenerLng);
-    };
-  }, [lat, lng, mapRef, region]);
-
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        left: position.x,
-        top: position.y,
-        width: 50,
-        height: 50,
-        zIndex: 1000,
-      }}
-    >
-      <Image
-        source={require('../src/Assets/Imagenes/camion.png')}
-        style={{ width: 50, height: 50 }}
-      />
     </View>
   );
 };
