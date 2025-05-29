@@ -13,6 +13,7 @@ import { database } from "../src/config/fb";
 import { SwipeListView } from "react-native-swipe-list-view";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 const eliminarProducto = async (id) => {
   try {
@@ -74,15 +75,15 @@ const Inventario = ({ navigation }) => {
   const renderHiddenItem = (data) => (
     <View style={styles.rowBack}>
       <TouchableOpacity
-        style={[styles.backButton, { backgroundColor: "#ccc" }]}
+        style={[styles.backButton, { backgroundColor: "#fff" }]}
         onPress={() =>
           navigation.navigate("EditarProducto", { producto: data.item })
         }
       >
-        <AntDesign name="edit" size={24} color="white" />
+        <AntDesign name="edit" size={24} color="#4a73ff" />
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.backButton, { backgroundColor: "#ccc" }]}
+        style={[styles.backButton, { backgroundColor: "#fff" }]}
         onPress={() =>
           Alert.alert(
             "¿Eliminar producto?",
@@ -98,7 +99,7 @@ const Inventario = ({ navigation }) => {
           )
         }
       >
-        <AntDesign name="delete" size={24} color="white" />
+        <FontAwesome name="trash-o" size={24} color="red" />
       </TouchableOpacity>
     </View>
   );
@@ -155,22 +156,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 1,
+    height: 80, // <-- altura fija
+    borderColor: "#ccc",
+    borderWidth: 0.3,
   },
   rowBack: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
+    backgroundColor: "#e9ecfd",
     marginBottom: 10,
     borderRadius: 10,
+    paddingRight: 12,
+    height: 80, // <-- misma altura
+    gap: 10,
+    
   },
   backButton: {
-    width: 75,
-    height: "100%",
+    width: 50,
+    height: 50, // altura fija, pero centrado verticalmente
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
-    elevation: 2,
+    borderRadius: 20,
+    backgroundColor: "#fff",
   },
   nombre: {
     fontSize: 18,

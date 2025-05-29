@@ -15,6 +15,7 @@ import { Menu, IconButton, TextInput } from "react-native-paper";
 import { AntDesign } from '@expo/vector-icons';
 import { useFonts } from "expo-font";
 
+
 const eliminarUsuario = async (id) => {
   try {
     await deleteDoc(doc(database, "usuarios", id));
