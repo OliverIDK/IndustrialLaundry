@@ -11,8 +11,12 @@ import {
 } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { getAuth } from "firebase/auth";
+
 
 const AgregarNotaEntrega = ({ route, navigation }) => {
+  const [recibidoPor, setRecibidoPor] = useState("");
+
   const { cliente, fecha, tipoLavadoId, tipoNota, prendas, subtotal } =
     route.params;
 
@@ -48,6 +52,28 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
 
     obtenerTipoLavado();
   }, [tipoLavadoId]);
+useEffect(() => {
+  const obtenerUsuarioActual = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      try {
+        const docRef = doc(database, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setRecibidoPor(docSnap.data().nombre || "Desconocido");
+        } else {
+          setRecibidoPor("Desconocido");
+        }
+      } catch (error) {
+        console.error("Error al obtener datos del usuario actual:", error);
+      }
+    }
+  };
+
+  obtenerUsuarioActual();
+}, []);
 
   useEffect(() => {
     const obtenerChoferes = async () => {
@@ -92,16 +118,18 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
         : null;
 
     navigation.navigate("AgregarNotaCompletada", {
-      cliente,
-      fecha,
-      tipoLavadoId,
-      tipoNota,
-      prendas,
-      subtotal,
-      metodoEntrega,
-      fechaEntrega: fechaEntrega.toISOString().split("T")[0],
-      chofer,
-    });
+  cliente,
+  fecha,
+  tipoLavadoId,
+  tipoNota,
+  prendas,
+  subtotal,
+  metodoEntrega,
+  fechaEntrega: fechaEntrega.toISOString().split("T")[0],
+  chofer,
+  recibidoPor, // nombre del usuario logeado
+});
+
   };
 
   return (
@@ -178,6 +206,7 @@ const AgregarNotaEntrega = ({ route, navigation }) => {
         <Text>Fecha: {fechaFormateada}</Text>
         <Text>Tipo de lavado: {nombreTipoLavado}</Text>
         <Text>Tipo de nota: {tipoNota}</Text>
+        <Text>Recibido por: {recibidoPor}</Text>
         {prendas.map((p, idx) => (
           <Text key={idx}>
             {p.nombre} x{p.cantidad} = ${p.precio * p.cantidad}

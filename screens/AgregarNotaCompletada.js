@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   container: {
+    paddingTop:200,
     padding: 24,
     alignItems: "center",
     backgroundColor: "#fff",

@@ -112,7 +112,7 @@ function MyStack() {
         name="AgregarProducto"
         component={AgregarProducto}
         options={{
-          title: "Agregar Producto",
+          title: "Inventario",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -121,7 +121,7 @@ function MyStack() {
         name="EditarProducto"
         component={EditarProducto}
         options={{
-          title: "EditarProducto",
+          title: "Inventario",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -130,7 +130,7 @@ function MyStack() {
         name="AgregarPrenda"
         component={AgregarPrenda}
         options={{
-          title: "AgregarPrenda",
+          title: "Prenda",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -139,7 +139,7 @@ function MyStack() {
         name="EditarPrenda"
         component={EditarPrenda}
         options={{
-          title: "EditarPrenda",
+          title: "Prenda",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -148,7 +148,7 @@ function MyStack() {
         name="AgregarTipoLavado"
         component={AgregarTipoLavado}
         options={{
-          title: "AgregarTipoLavado",
+          title: "Tipo de Lavado",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -157,7 +157,7 @@ function MyStack() {
         name="AgregarPrecio"
         component={AgregarPrecio}
         options={{
-          title: "AgregarPrecio",
+          title: "Precios",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -166,7 +166,7 @@ function MyStack() {
         name="EditarTipoLavado"
         component={EditarTipoLavado}
         options={{
-          title: "EditarTipoLavado",
+          title: "Tipos de Lavado",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -175,7 +175,7 @@ function MyStack() {
         name="AgregarUsuarios"
         component={AgregarUsuarios}
         options={{
-          title: "AgregarUsuarios",
+          title: "Usuarios",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -184,7 +184,7 @@ function MyStack() {
         name="AgregarNota"
         component={AgregarNota}
         options={{
-          title: "AgregarNota",
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -193,7 +193,7 @@ function MyStack() {
         name="AgregarNotaPrendas"
         component={AgregarNotaPrendas}
         options={{
-          title: "AgregarNotaPrendas",
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -202,7 +202,7 @@ function MyStack() {
         name="AgregarNotaEntrega"
         component={AgregarNotaEntrega}
         options={{
-          title: "AgregarNotaEntrega",
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -211,9 +211,10 @@ function MyStack() {
         name="AgregarNotaCompletada"
         component={AgregarNotaCompletada}
         options={{
-          title: "AgregarNotaCompletada",
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -229,7 +230,7 @@ function MyStack() {
         name="Steps"
         component={Steps}
         options={{
-          title: "Steps",
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -238,7 +239,7 @@ function MyStack() {
         name="EditarUsuario"
         component={EditarUsuario}
         options={{
-          title: "EditarUsuario",
+          title: "Usuario",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}
@@ -575,7 +576,7 @@ function TapsService() {
         name="TipoLavado"
         component={TipoLavado}
         options={{
-          title: "TipoLavado",
+          title: "Tipos de Lavado",
           tabBarLabelStyle: {
             fontWeight: "bold",
           },
@@ -585,7 +586,7 @@ function TapsService() {
         name="PrecioPrenda"
         component={PrecioPrenda}
         options={{
-          title: "PrecioPrenda",
+          title: "Precios",
           tabBarLabelStyle: {
             fontWeight: "bold",
           },

@@ -10,10 +10,18 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  onSnapshot,
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { TextInput } from "react-native-paper";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { Alert } from "react-native";
 
 const AgregarNotaPrendas = ({ route, navigation }) => {
   const { tipoLavadoId, cliente, fecha, tipoNota } = route.params;
@@ -23,55 +31,59 @@ const AgregarNotaPrendas = ({ route, navigation }) => {
   const [subtotal, setSubtotal] = useState(0);
 
   useEffect(() => {
-    const fetchPrendasConPrecio = async () => {
-      try {
-        const preciosSnapshot = await getDocs(
-          query(
-            collection(database, "precios"),
-            where("tipoLavadoId", "==", tipoLavadoId)
-          )
-        );
+    const q = query(
+      collection(database, "precios"),
+      where("tipoLavadoId", "==", tipoLavadoId)
+    );
 
-        const precios = preciosSnapshot.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      try {
+        const precios = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
         const prendasPromises = precios.map(async (precio) => {
-          const prendaSnap = await getDocs(
-            query(
-              collection(database, "prendas"),
-              where("__name__", "==", precio.prendaId)
-            )
-          );
-          const prendaDoc = prendaSnap.docs[0];
+          const prendaRef = doc(database, "prendas", precio.prendaId);
+          const prendaSnap = await getDoc(prendaRef);
 
-          if (!prendaDoc) {
-            console.warn(`No se encontró prenda con ID: ${precio.prendaId}`);
-            return null;
-          }
+          if (!prendaSnap.exists()) return null;
+
+          const prendaData = prendaSnap.data();
+
+          // Filtrar por tipo de nota
+          if (prendaData.tipo !== tipoNota) return null;
 
           return {
             ...precio,
             prendaId: precio.prendaId,
-            nombre: prendaDoc.data().nombre,
-            tipo: prendaDoc.data().tipo,
+            nombre: prendaData.nombre,
+            tipo: prendaData.tipo,
           };
         });
 
         const prendasConNombre = (await Promise.all(prendasPromises)).filter(
-          (p) => p !== null
+          Boolean
         );
-        setPrendas(prendasConNombre);
+
+        // Filtrar duplicados por prendaId
+        const prendasFiltradas = prendasConNombre.filter(
+          (item, index, self) =>
+            index === self.findIndex((p) => p.prendaId === item.prendaId)
+        );
+
+        setPrendas(prendasFiltradas);
+
         setLoading(false);
       } catch (error) {
         console.error("Error al cargar prendas con precio:", error);
         setLoading(false);
       }
-    };
+    });
 
-    fetchPrendasConPrecio();
-  }, [tipoLavadoId]);
+    // Limpiar el listener al desmontar
+    return () => unsubscribe();
+  }, [tipoLavadoId, tipoNota]);
 
   const incrementar = (id, precio) => {
     const cantidad = (cantidadSeleccionada[id] || 0) + 1;
@@ -100,24 +112,29 @@ const AgregarNotaPrendas = ({ route, navigation }) => {
   };
 
   const continuar = () => {
-    const seleccion = prendas
-      .filter((p) => cantidadSeleccionada[p.id] > 0)
-      .map((p) => ({
-        prendaId: p.prendaId,
-        nombre: p.nombre,
-        precio: p.precio,
-        cantidad: cantidadSeleccionada[p.id],
-      }));
+  const seleccion = prendas
+    .filter((p) => cantidadSeleccionada[p.id] > 0)
+    .map((p) => ({
+      prendaId: p.prendaId,
+      nombre: p.nombre,
+      precio: p.precio,
+      cantidad: cantidadSeleccionada[p.id],
+    }));
 
-    navigation.navigate("AgregarNotaEntrega", {
-      cliente,
-      fecha,
-      tipoLavadoId,
-      tipoNota,
-      prendas: seleccion,
-      subtotal,
-    });
-  };
+  if (seleccion.length === 0) {
+    Alert.alert("Aviso", "Debes seleccionar al menos una prenda para continuar.");
+    return;
+  }
+
+  navigation.navigate("AgregarNotaEntrega", {
+    cliente,
+    fecha,
+    tipoLavadoId,
+    tipoNota,
+    prendas: seleccion,
+    subtotal,
+  });
+};
 
   if (loading) {
     return (
