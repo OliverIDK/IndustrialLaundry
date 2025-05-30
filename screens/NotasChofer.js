@@ -1,15 +1,14 @@
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   Modal,
-  Button,
   Alert,
-} from 'react-native'
-import React, { useEffect, useState } from 'react'
+  Pressable,
+} from "react-native";
 import {
   collection,
   query,
@@ -17,220 +16,313 @@ import {
   doc,
   updateDoc,
   onSnapshot,
-} from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
-import { database } from '../src/config/fb'
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { database } from "../src/config/fb";
+import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
+import { AnimatedCircularProgress } from "react-native-circular-progress";
 
-// Función para enviar notificación al backend
 const enviarNotificacion = async (uid, estado) => {
   try {
     const response = await fetch(
-      'https://005e5364-527c-403d-b670-2d6b9e6b61d5-00-1uk2rcqp51d99.kirk.replit.dev/enviar-notificacion',
+      "https://005e5364-527c-403d-b670-2d6b9e6b61d5-00-1uk2rcqp51d99.kirk.replit.dev/enviar-notificacion",
       {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uid: uid,
-          status: estado,
-        }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, status: estado }),
       }
-    )
-
-    const data = await response.json()
-    console.log('Notificación enviada:', data)
+    );
+    const data = await response.json();
+    console.log("Notificación enviada:", data);
   } catch (error) {
-    console.error('Error enviando notificación:', error)
+    console.error("Error enviando notificación:", error);
   }
-}
+};
 
 const NotasChofer = () => {
-  const [notas, setNotas] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [notaSeleccionada, setNotaSeleccionada] = useState(null)
+  const [notas, setNotas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [notaSeleccionada, setNotaSeleccionada] = useState(null);
+  const [nuevoEstado, setNuevoEstado] = useState("");
+  const [fill, setFill] = useState(0);
 
   useEffect(() => {
-    const auth = getAuth()
-    const user = auth.currentUser
-    if (!user) return
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return;
 
-    const notasRef = collection(database, 'notas')
+    // Query para notas asignadas al chofer con estado Listo para entrega o En camino
     const q = query(
-      notasRef,
-      where('estado', 'in', ['Listo para entrega', 'En camino']),
-      where('chofer.uid', '==', user.uid)
-    )
+      collection(database, "notas"),
+      where("estado", "in", ["Listo para entrega", "En camino"]),
+      where("chofer.uid", "==", user.uid)
+    );
 
     const unsubscribe = onSnapshot(
       q,
-      snapshot => {
-        const data = snapshot.docs.map(doc => ({
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }))
-        setNotas(data)
-        setLoading(false)
+        }));
+        setNotas(data);
+        setLoading(false);
       },
-      error => {
-        console.error('Error al escuchar notas:', error)
-        setLoading(false)
+      (error) => {
+        console.error("Error al escuchar notas:", error);
+        setLoading(false);
       }
-    )
+    );
 
-    return () => unsubscribe()
-  }, [])
+    return () => unsubscribe();
+  }, []);
 
-  const cambiarEstado = async nuevoEstado => {
-    if (!notaSeleccionada) return
+  // Animación circular para loading
+  useEffect(() => {
+    if (!loading) return;
+
+    const interval = setInterval(() => {
+      setFill((oldFill) => (oldFill >= 100 ? 0 : oldFill + 10));
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const abrirModal = (nota) => {
+    setNotaSeleccionada(nota);
+    setNuevoEstado(nota.estado);
+    setModalVisible(true);
+  };
+
+  const cerrarModal = () => {
+    setModalVisible(false);
+    setNotaSeleccionada(null);
+    setNuevoEstado("");
+  };
+
+  const cambiarEstado = async () => {
+    if (!notaSeleccionada || !nuevoEstado) {
+      Alert.alert(
+        "Atención",
+        "Selecciona un nuevo estado antes de actualizar."
+      );
+      return;
+    }
 
     try {
-      const notaRef = doc(database, 'notas', notaSeleccionada.id)
-      await updateDoc(notaRef, { estado: nuevoEstado })
+      const notaRef = doc(database, "notas", notaSeleccionada.id);
+      await updateDoc(notaRef, { estado: nuevoEstado });
 
-      // Enviar notificación al cliente
-      const uidCliente = notaSeleccionada?.cliente?.uid
-      if (uidCliente) {
-        await enviarNotificacion(uidCliente, nuevoEstado)
+      if (notaSeleccionada?.cliente?.uid) {
+        await enviarNotificacion(notaSeleccionada.cliente.uid, nuevoEstado);
       }
 
-      Alert.alert('Éxito', `Estado actualizado a "${nuevoEstado}"`)
-      setModalVisible(false)
-      setNotaSeleccionada(null)
+      Alert.alert("Éxito", `Estado actualizado a "${nuevoEstado}"`);
+      cerrarModal();
     } catch (error) {
-      console.error('Error actualizando estado:', error)
-      Alert.alert('Error', 'No se pudo actualizar el estado')
+      console.error("Error actualizando estado:", error);
+      Alert.alert(
+        "Error",
+        "No se pudo actualizar el estado. Intenta de nuevo."
+      );
     }
-  }
+  };
 
-  if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />
-  }
+if (loading) {
+  return (
+    <View style={styles.loadingContainer}>
+      <Text>Cargando...</Text>
+      <AnimatedCircularProgress
+        size={100}
+        width={10}
+        fill={fill}
+        tintColor="#004AAD"
+        backgroundColor="#e4e4e4"
+        rotation={0}
+      />
+    </View>
+  );
+}
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notas asignadas</Text>
-      <FlatList
-        data={notas}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.notaItem}
-            onPress={() => {
-              setNotaSeleccionada(item)
-              setModalVisible(true)
-            }}
-          >
-            <Text style={styles.nombre}>{item.cliente?.nombre}</Text>
-            <Text style={styles.direccion}>{item.cliente?.direccion}</Text>
-            <Text style={styles.estado}>Estado: {item.estado}</Text>
-          </TouchableOpacity>
-        )}
-      />
 
-      {/* Modal para cambiar estado */}
+      {notas.length === 0 ? (
+        <Text style={styles.noNotasText}>No tienes notas asignadas.</Text>
+      ) : (
+        <FlatList
+          data={notas}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.notaItem}
+              onPress={() => abrirModal(item)}
+            >
+              <Text style={styles.nombre}>{item.cliente?.nombre}</Text>
+              <Text style={styles.direccion}>{item.cliente?.direccion}</Text>
+              <Text style={styles.estado}>Estado: {item.estado}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
+
       <Modal
         visible={modalVisible}
-        transparent={true}
+        transparent
         animationType="slide"
-        onRequestClose={() => {
-          setModalVisible(false)
-          setNotaSeleccionada(null)
-        }}
+        onRequestClose={cerrarModal}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
+        <Pressable style={styles.modalOverlay} onPress={cerrarModal}>
+          <Pressable style={styles.modalContent} onPress={() => {}}>
+            <TouchableOpacity style={styles.closeIcon} onPress={cerrarModal}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+
             <Text style={styles.modalTitle}>Cambiar estado de la nota</Text>
-            <Text style={styles.modalSubtitle}>
-              Cliente: {notaSeleccionada?.cliente?.nombre}
+
+            <Text style={styles.modalText}>
+              Cliente: {notaSeleccionada?.cliente?.nombre || "N/A"}
             </Text>
-            <Text style={styles.modalSubtitle}>
-              Estado actual: {notaSeleccionada?.estado}
+            <Text style={styles.modalText}>
+              Estado actual: {notaSeleccionada?.estado || "N/A"}
             </Text>
 
-            {notaSeleccionada?.estado === 'Listo para entrega' && (
-              <Button
-                title="Marcar como En camino"
-                onPress={() => cambiarEstado('En camino')}
-              />
-            )}
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={nuevoEstado}
+                onValueChange={(value) => setNuevoEstado(value)}
+                style={styles.picker}
+                dropdownIconColor="#004AAD"
+              >
+                <Picker.Item
+                  label="Listo para entrega"
+                  value="Listo para entrega"
+                />
+                <Picker.Item label="En camino" value="En camino" />
+                <Picker.Item label="Entregado" value="Entregado" />
+              </Picker>
+            </View>
 
-            {(notaSeleccionada?.estado === 'Listo para entrega' ||
-              notaSeleccionada?.estado === 'En camino') && (
-              <Button
-                title="Marcar como Entregado"
-                onPress={() => cambiarEstado('Entregado')}
-                color="green"
-              />
-            )}
-
-            <Button
-              title="Cancelar"
-              onPress={() => {
-                setModalVisible(false)
-                setNotaSeleccionada(null)
-              }}
-              color="red"
-            />
-          </View>
-        </View>
+            <TouchableOpacity
+              style={styles.btnActualizar}
+              onPress={cambiarEstado}
+            >
+              <Text style={styles.btnText}>Actualizar estado</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
-  )
-}
+  );
+};
 
-export default NotasChofer
+export default NotasChofer;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "600",
     marginBottom: 12,
   },
+  noNotasText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#555",
+    marginTop: 30,
+  },
   notaItem: {
-    backgroundColor: '#f1f1f1',
-    padding: 12,
+    backgroundColor: "#f9f9f9",
+    padding: 14,
     marginVertical: 6,
-    borderRadius: 8,
+    borderRadius: 10,
+    elevation: 1,
   },
   nombre: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "600",
   },
   direccion: {
     fontSize: 14,
-    color: '#333',
+    color: "#555",
+    marginTop: 4,
   },
   estado: {
     fontSize: 14,
-    color: '#555',
+    color: "#777",
+    marginTop: 2,
   },
-  modalBackground: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  modalContainer: {
-    backgroundColor: 'white',
+  modalContent: {
+    backgroundColor: "white",
     padding: 20,
-    width: '80%',
-    borderRadius: 8,
-    elevation: 10,
+    width: "85%",
+    borderRadius: 12,
+    elevation: 6,
+    position: "relative",
+  },
+  closeIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: "700",
+    marginBottom: 12,
+    textAlign: "center",
   },
-  modalSubtitle: {
+  modalText: {
+    fontSize: 15,
+    marginBottom: 8,
+    color: "#333",
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#e4e4e4",
+    borderRadius: 8,
+    marginTop: 10,
+    backgroundColor: "#e4e4e4",
+  },
+  picker: {
+    height: 55,
+    width: "100%",
+    color: "#000",
+  },
+  btnActualizar: {
+    marginTop: 20,
+    backgroundColor: "#004AAD",
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  btnText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  loadingText: {
+    marginTop: 15,
     fontSize: 16,
-    marginBottom: 10,
+    color: "#555",
   },
-})
+});
