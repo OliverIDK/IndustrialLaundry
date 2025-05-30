@@ -6,6 +6,7 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database, auth } from "../src/config/fb"; // Verifica que esta ruta sea correcta
@@ -25,8 +26,10 @@ const Cliente = () => {
   const [tiposLavado, setTiposLavado] = useState([]);
   const [notasEntregadas, setNotasEntregadas] = useState([]);
 
-  const imageWidth = 300; 
-  const imageHeight = 200; 
+  const imageWidth = width * 0.9;
+  const imageHeight = 200;
+
+  const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
 
   // Carga tipos de lavado una vez
   const fetchTiposLavado = async () => {
@@ -57,6 +60,8 @@ const Cliente = () => {
       where("cliente.uid", "==", user.uid),
       where("estado", "==", "Entregado")
     );
+
+  
 
     const unsubscribe = onSnapshot(
       q,
@@ -107,7 +112,9 @@ const Cliente = () => {
           onScroll={onScroll}
           scrollEventThrottle={16}
           style={styles.carrusel}
-          contentContainerStyle={{ paddingHorizontal: (width - imageWidth) / 2 }}
+          contentContainerStyle={{
+            paddingHorizontal: (width - imageWidth) / 2,
+          }}
           snapToInterval={imageWidth + 16}
           decelerationRate="fast"
         >
@@ -142,13 +149,36 @@ const Cliente = () => {
         <Text style={styles.sectionTitle}>Servicios</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {tiposLavado.length === 0 ? (
-            <Text>Cargando servicios...</Text>
+            <Text style={{ color: "#777", fontStyle: "italic" }}>
+              Cargando servicios...
+            </Text>
           ) : (
-            tiposLavado.map((servicio) => (
-              <View key={servicio.id} style={styles.servicioCard}>
-                <Text style={styles.servicioNombre}>{servicio.nombre}</Text>
-              </View>
-            ))
+            tiposLavado.map((servicio) => {
+              const seleccionado = servicio.id === servicioSeleccionado;
+              return (
+                <TouchableOpacity
+                  key={servicio.id}
+                  style={[
+                    styles.servicioCard,
+                    seleccionado
+                      ? styles.servicioCardSeleccionado
+                      : styles.servicioCardNormal,
+                  ]}
+                  onPress={() => setServicioSeleccionado(servicio.id)}
+                >
+                  <Text
+                    style={[
+                      styles.servicioNombre,
+                      seleccionado
+                        ? styles.servicioNombreSeleccionado
+                        : styles.servicioNombreNormal,
+                    ]}
+                  >
+                    {servicio.nombre}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
           )}
         </ScrollView>
       </View>
@@ -156,18 +186,30 @@ const Cliente = () => {
       {/* Historial */}
       <View style={styles.historialContainer}>
         <Text style={styles.sectionTitle}>Historial de notas entregadas</Text>
-        {notasEntregadas.length === 0 && (
-          <Text style={{ color: "#666" }}>No hay notas entregadas aún.</Text>
+        {notasEntregadas.length === 0 ? (
+          <Text style={{ color: "#777", fontStyle: "italic" }}>
+            No hay notas entregadas aún.
+          </Text>
+        ) : (
+          notasEntregadas.map((nota) => (
+            <View key={nota.idNota} style={styles.notaCard}>
+              <View style={styles.notaHeader}>
+                <Text style={styles.notaId}>
+                  #{nota.idNota.slice(-6).toUpperCase()}
+                </Text>
+                <Text style={styles.notaFecha}>
+                  {nota.fechaEntrega || nota.fecha}
+                </Text>
+              </View>
+              <Text style={styles.notaSubtotal}>
+                Subtotal:{" "}
+                <Text style={{ fontWeight: "bold" }}>
+                  ${nota.subtotal?.toFixed(2) || "0.00"}
+                </Text>
+              </Text>
+            </View>
+          ))
         )}
-        {notasEntregadas.map((nota) => (
-          <View key={nota.idNota} style={styles.notaCard}>
-            <Text style={styles.notaId}>Nota: {nota.idNota}</Text>
-            <Text>Fecha Entrega: {nota.fechaEntrega || nota.fecha}</Text>
-            <Text style={styles.notaSubtotal}>
-              Subtotal: ${nota.subtotal?.toFixed(2) || nota.subtotal || "0.00"}
-            </Text>
-          </View>
-        ))}
       </View>
     </ScrollView>
   );
@@ -179,21 +221,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#fff",
   },
   carruselWrapper: {
-    height: 220,
-    marginBottom: 20,
+    height: 225,
+    marginBottom: 10,
+    width: "110%",
   },
   carrusel: {
     flex: 1,
   },
   carruselImagen: {
-    borderRadius: 10,
+    borderRadius: 35,
     marginRight: 16,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   indicadores: {
     position: "absolute",
-    bottom: 10,
+    bottom: 5,
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -213,40 +259,75 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+    color: "#333",
+    marginTop:1,
   },
   servicioCard: {
-    width: 120,
-    height: 60,
-    backgroundColor: "#e3f2fd",
-    borderRadius: 8,
+    width: 140,
+    height: 70,
+    borderRadius: 12,
     marginRight: 15,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    
   },
+  servicioCardNormal: {
+    backgroundColor: "#fff",
+    borderColor: "#ccc",
+  },
+  servicioCardSeleccionado: {
+    backgroundColor: "#EAF1FF",
+    borderColor: "#2196f3",
+  },
+
   servicioNombre: {
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
   },
-  historialContainer: {
-    marginBottom: 30,
+  servicioNombreNormal: {
+    color: "#666",
   },
+  servicioNombreSeleccionado: {
+    color: "#2196f3",
+  },
+
   notaCard: {
-    backgroundColor: "#f1f1f1",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    elevation: 1,
+    backgroundColor: "#ffffff",
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 16,
+    borderLeftWidth: 6,
+    borderLeftColor: "#2196F3",
+    borderTopWidth: 0.5,
+    borderTopColor: "#ccc",
+    borderRightWidth: 0.5,
+    borderRightColor: "#ccc",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#ccc",
+  },
+  notaHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
   },
   notaId: {
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 4,
+    color: "#333",
+  },
+  notaFecha: {
+    fontSize: 14,
+    color: "#888",
   },
   notaSubtotal: {
-    marginTop: 6,
-    fontWeight: "600",
+    fontSize: 15,
+    color: "#444",
+    marginTop: 4,
   },
 });
