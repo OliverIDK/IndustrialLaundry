@@ -53,11 +53,11 @@ const NotasChofer = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // Query para notas asignadas al chofer con estado Listo para entrega o En camino
+    // Query con índice compuesto recomendado en Firestore
     const q = query(
       collection(database, "notas"),
-      where("estado", "in", ["Listo para entrega", "En camino"]),
-      where("chofer.uid", "==", user.uid)
+      where("chofer.uid", "==", user.uid),
+      where("estado", "in", ["Listo para entrega", "En camino"])
     );
 
     const unsubscribe = onSnapshot(
@@ -104,10 +104,12 @@ const NotasChofer = () => {
 
   const cambiarEstado = async () => {
     if (!notaSeleccionada || !nuevoEstado) {
-      Alert.alert(
-        "Atención",
-        "Selecciona un nuevo estado antes de actualizar."
-      );
+      Alert.alert("Atención", "Selecciona un nuevo estado antes de actualizar.");
+      return;
+    }
+
+    if (nuevoEstado === notaSeleccionada.estado) {
+      Alert.alert("Atención", "El nuevo estado es igual al estado actual.");
       return;
     }
 
@@ -123,28 +125,25 @@ const NotasChofer = () => {
       cerrarModal();
     } catch (error) {
       console.error("Error actualizando estado:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo actualizar el estado. Intenta de nuevo."
-      );
+      Alert.alert("Error", "No se pudo actualizar el estado. Intenta de nuevo.");
     }
   };
 
-if (loading) {
-  return (
-    <View style={styles.loadingContainer}>
-      <Text>Cargando...</Text>
-      <AnimatedCircularProgress
-        size={100}
-        width={10}
-        fill={fill}
-        tintColor="#004AAD"
-        backgroundColor="#e4e4e4"
-        rotation={0}
-      />
-    </View>
-  );
-}
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Cargando notas...</Text>
+        <AnimatedCircularProgress
+          size={100}
+          width={10}
+          fill={fill}
+          tintColor="#004AAD"
+          backgroundColor="#e4e4e4"
+          rotation={0}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -198,10 +197,7 @@ if (loading) {
                 style={styles.picker}
                 dropdownIconColor="#004AAD"
               >
-                <Picker.Item
-                  label="Listo para entrega"
-                  value="Listo para entrega"
-                />
+                <Picker.Item label="Listo para entrega" value="Listo para entrega" />
                 <Picker.Item label="En camino" value="En camino" />
                 <Picker.Item label="Entregado" value="Entregado" />
               </Picker>
@@ -321,8 +317,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: "#555",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
 });
