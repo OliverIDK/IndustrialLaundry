@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   notaItem: {
     padding: 18,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
     marginBottom: 15,
     borderRadius: 12,
     borderWidth: 1,

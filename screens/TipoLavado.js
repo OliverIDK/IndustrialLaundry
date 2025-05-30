@@ -61,7 +61,7 @@ const TipoLavado = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tipos de Lavado</Text>
+     
       <FlatList
         data={tipos}
         keyExtractor={(item) => item.id}

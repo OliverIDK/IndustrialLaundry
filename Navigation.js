@@ -2,7 +2,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { ImageBackground, TouchableOpacity } from "react-native";
+import React from "react";
+import { Image, TouchableOpacity } from "react-native";
+import Feather from "react-native-vector-icons/Feather";
 
 import Login from "./screens/Login";
 import Prendas from "./screens/Prendas";
@@ -281,7 +283,7 @@ function TabGroupAdmin() {
         component={Usuarios}
         options={{ title: "Usuarios" }}
       />
-      <Tab.Screen name="Tabs" component={Taps} options={{title: "Notas"}}/>
+      <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
       <Tab.Screen name="Inventario" component={Inventario} />
       <Tab.Screen name="Mapa" component={Mapa} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
@@ -314,8 +316,17 @@ function TabGroupAuxiliar() {
           return <Icon name={iconName} color={color} size={size} />;
         },
       })}
-    ><Tab.Screen name="Servicios" component={Taps} options={{title: "Crear"}}/>
-      <Tab.Screen name="Tabs" component={NotasAuxiliar} options={{ title: "Notas" }} />
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={Taps}
+        options={{ title: "Crear" }}
+      />
+      <Tab.Screen
+        name="Tabs"
+        component={NotasAuxiliar}
+        options={{ title: "Notas" }}
+      />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );
@@ -398,36 +409,7 @@ function TabGroupChofer() {
         tabBarActiveTintColor: "#144E78",
         tabBarIcon: ({ color, focused, size }) => {
           let iconName;
-           if (route.name == "NotasChofer") {
-            iconName = "inbox";
-          } else if (route.name == "Configuracion") {
-            iconName = "cog";
-          }
-          return <Icon name={iconName} color={color} size={size} />;
-        },
-      })}
-    >
-      <Tab.Screen name="NotasChofer" component={NotasChofer} options={{ title: "NotasChofer" }} />
-      <Tab.Screen name="Configuracion" component={Configuracion} />
-    </Tab.Navigator>
-  );
-}
-
-function TabGroupCliente() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarShowLabel: false,
-        animation: "shift",
-        headerShadowVisible: false,
-        tabBarActiveTintColor: "#144E78",
-        tabBarIcon: ({ color, focused, size }) => {
-          let iconName;
-          if (route.name == "Servicios") {
-            iconName = "home";
-          } else if (route.name == "Usuarios") {
-            iconName = "users";
-          } else if (route.name == "Tabs") {
+          if (route.name == "NotasChofer") {
             iconName = "inbox";
           } else if (route.name == "Configuracion") {
             iconName = "cog";
@@ -437,15 +419,76 @@ function TabGroupCliente() {
       })}
     >
       <Tab.Screen
-        name="Servicios"
-        component={Cliente}
-        options={{ title: "Servicios" }}
+        name="NotasChofer"
+        component={NotasChofer}
+        options={{ title: "NotasChofer" }}
       />
-      <Tab.Screen name="Tabs" component={NotasCliente} options={{ title: "Notas" }} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>
   );
 }
+
+function TabGroupCliente() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => {
+        const baseOptions = {
+          tabBarShowLabel: false,
+          animation: "shift",
+          headerShadowVisible: false,
+          tabBarActiveTintColor: "#144E78",
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
+            if (route.name === "Servicios") iconName = "home";
+            else if (route.name === "Usuarios") iconName = "users";
+            else if (route.name === "Tabs") iconName = "inbox";
+            else if (route.name === "Configuracion") iconName = "cog";
+            return <Icon name={iconName} color={color} size={size} />;
+          },
+        };
+
+        // Personalizar solo para "Servicios"
+        if (route.name === "Servicios") {
+          return {
+            ...baseOptions,
+            headerTitleAlign: "center",
+            headerTitle: () => (
+              <Image
+                source={require("./src/Assets/Imagenes/logo2.png")}
+                style={{ width: 160, height: 50, resizeMode: "contain" }}
+              />
+            ),
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("Notificaciones presionadas");
+                }}
+                style={{ marginRight: 15 }}
+              >
+                <Feather name="bell" size={24} color="#2196f3" />
+              </TouchableOpacity>
+            ),
+          };
+        }
+
+        return baseOptions;
+      }}
+    >
+      <Tab.Screen
+        name="Servicios"
+        component={Cliente}
+        options={{ title: "Servicios" }} // No afecta, overrideado
+      />
+      <Tab.Screen
+        name="Tabs"
+        component={NotasCliente}
+        options={{ title: "Notas" }}
+      />
+      <Tab.Screen name="Configuracion" component={Configuracion} />
+    </Tab.Navigator>
+  );
+}
+
 function Taps() {
   return (
     <MaterialTaps.Navigator

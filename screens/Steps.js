@@ -1,36 +1,52 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 
 const estados = [
-  'Recibido',
-  'En Lavado',
-  'En Secado',
-  'En Planchado y/o Doblado',
-  'Listo para entrega',
-  'En camino',
-  'Entregado',
+  "Recibido",
+  "En Lavado",
+  "En Secado",
+  "En Planchado y/o Doblado",
+  "Listo para entrega",
+  "En camino",
+  "Entregado",
 ];
 
 const Steps = ({ route, navigation }) => {
   const { nota } = route.params;
-  const estadoActualIndex = estados.indexOf(nota.estado);
+  const estadoActualIndex = estados.includes(nota.estado)
+    ? estados.indexOf(nota.estado)
+    : 0;
 
   const handleVerMapa = () => {
-    navigation.navigate('Mapa');
+    navigation.navigate("Mapa");
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: 20,
+        paddingBottom: 100,
+        backgroundColor: "#fff",
+      }}
+    >
       {/* Información general de la nota */}
       <View style={styles.ticket}>
         <Text style={styles.ticketTitle}>Nota: {nota.idNota}</Text>
-        <Text>Fecha Entrega: {nota.fechaEntrega}</Text>
-        <Text>Método de Entrega: {nota.metodoEntrega}</Text>
+        <Text style={styles.textInfo}>Fecha Entrega: {nota.fechaEntrega}</Text>
+        <Text style={styles.textInfo}>
+          Método de Entrega: {nota.metodoEntrega}
+        </Text>
 
         {nota.chofer && (
           <View style={{ marginTop: 10 }}>
             <Text style={styles.sectionTitle}>Chofer</Text>
-            <Text>Nombre: {nota.chofer?.nombre}</Text>
+            <Text style={styles.textInfo}>Nombre: {nota.chofer?.nombre}</Text>
           </View>
         )}
 
@@ -41,34 +57,52 @@ const Steps = ({ route, navigation }) => {
               <Text style={styles.prendaTexto}>
                 {prenda.cantidad} x {prenda.nombre}
               </Text>
-              <Text style={styles.precioTexto}>
-                ${prenda.precio}
-              </Text>
+              <Text style={styles.precioTexto}>${prenda.precio}</Text>
             </View>
           ))}
-          {/* Subtotal total de la nota */}
-          <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: '#ccc', paddingTop: 8 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Subtotal total: ${nota.subtotal}</Text>
+
+          <View style={styles.lineSeparator} />
+
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalText}>Subtotal total:</Text>
+            <Text style={styles.totalPrice}>${nota.subtotal}</Text>
           </View>
         </View>
       </View>
 
-      {/* Pasos del proceso */}
+      {/* Pasos */}
       <View style={styles.stepsContainer}>
         {estados.map((estado, i) => {
           const isActive = i === estadoActualIndex;
           const isCompleted = i < estadoActualIndex;
+          const size = isActive ? 36 : 28;
 
           return (
             <View key={i} style={styles.stepRow}>
               <View
                 style={[
-                  styles.circle,
-                  isCompleted && styles.circleCompleted,
-                  isActive && styles.circleActive,
+                  {
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    borderWidth: 2,
+                    borderColor: isActive || isCompleted ? "#2196f3" : "#ccc",
+                    backgroundColor:
+                      isActive || isCompleted ? "#2196f3" : "#fff",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 2,
+                  },
                 ]}
               >
-                <Text style={styles.circleText}>{i + 1}</Text>
+                <Text
+                  style={{
+                    color: isActive || isCompleted ? "#fff" : "#000",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {i + 1}
+                </Text>
               </View>
 
               {i !== estados.length - 1 && (
@@ -83,8 +117,9 @@ const Steps = ({ route, navigation }) => {
               <Text
                 style={[
                   styles.stepText,
-                  isActive && styles.stepTextActive,
-                  isCompleted && styles.stepTextCompleted,
+                  isActive
+                    ? styles.stepTextActive
+                    : { color: "#888", fontWeight: "normal" },
                 ]}
               >
                 {estado}
@@ -95,7 +130,7 @@ const Steps = ({ route, navigation }) => {
       </View>
 
       {/* Botón Ver Mapa */}
-      {nota.metodoEntrega === 'Delivery' && (
+      {nota.metodoEntrega === "Delivery" && (
         <TouchableOpacity style={styles.button} onPress={handleVerMapa}>
           <Text style={styles.buttonText}>Ver Mapa</Text>
         </TouchableOpacity>
@@ -106,112 +141,142 @@ const Steps = ({ route, navigation }) => {
 
 export default Steps;
 
-const circleSize = 28;
+const circleSize = 30;
+const circleSizeActive = 38;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
   ticket: {
-    backgroundColor: '#e3f2fd',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    padding: 18,
+    borderRadius: 12,
     marginBottom: 30,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
   ticketTitle: {
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontWeight: "bold",
+    fontSize: 20,
     marginBottom: 8,
+    color: "#1f1f1f",
   },
   sectionTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: "bold",
+    marginBottom: 6,
+    fontSize: 16,
+    color: "#333",
   },
   prendaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 6,
   },
   prendaTexto: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: "#444",
   },
   precioTexto: {
+    fontSize: 15,
+    color: "#444",
+    fontWeight: "bold",
+  },
+  lineSeparator: {
+    height: 1,
+    backgroundColor: "#ccc",
+    marginVertical: 12,
+    borderRadius: 1,
+  },
+
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  totalText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: 'bold',
+    color: "#333",
+    fontWeight: "600",
+  },
+  totalPrice: {
+    color: "#2196f3",
+    fontWeight: "bold",
+    fontSize: 18,
   },
   stepsContainer: {
-    flexDirection: 'column',
-    position: 'relative',
+    paddingTop: 20,
     marginLeft: circleSize / 2,
   },
   stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 40,
-    position: 'relative',
+    position: "relative",
   },
   circle: {
     width: circleSize,
     height: circleSize,
     borderRadius: circleSize / 2,
     borderWidth: 2,
-    borderColor: '#aaa',
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 2,
   },
   circleCompleted: {
-    backgroundColor: '#4caf50',
-    borderColor: '#4caf50',
+    backgroundColor: "#2196f3",
+    borderColor: "#2196f3",
   },
   circleActive: {
-    backgroundColor: '#2196f3',
-    borderColor: '#2196f3',
+    backgroundColor: "#2196f3",
+    borderColor: "#2196f3",
   },
   circleText: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   line: {
-    position: 'absolute',
-    left: circleSize / 2 - 1,
+    position: "absolute",
+    left: circleSize / 2 - 1.5,
     top: circleSize,
-    width: 4,
+    width: 3,
     height: 40,
-    backgroundColor: '#aaa',
+    backgroundColor: "#ccc",
     zIndex: 1,
+    borderRadius: 2,
   },
   lineCompleted: {
-    backgroundColor: '#4caf50',
+    backgroundColor: "#2196f3",
   },
   stepText: {
     marginLeft: 20,
     fontSize: 16,
-    color: '#555',
+    color: "#666",
+    flexShrink: 1,
   },
   stepTextActive: {
-    fontWeight: 'bold',
-    color: '#2196f3',
+    color: "#2196f3",
+    fontWeight: "bold",
+    fontSize: 18, // opcional para que sobresalga más
   },
   stepTextCompleted: {
-    color: '#4caf50',
+    color: "#2196f3",
   },
   button: {
     marginTop: 30,
-    backgroundColor: '#2196f3',
+    backgroundColor: "#2196f3",
     paddingVertical: 14,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 3,
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
   },
 });

@@ -61,8 +61,6 @@ const Cliente = () => {
       where("estado", "==", "Entregado")
     );
 
-  
-
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -153,32 +151,19 @@ const Cliente = () => {
               Cargando servicios...
             </Text>
           ) : (
-            tiposLavado.map((servicio) => {
-              const seleccionado = servicio.id === servicioSeleccionado;
-              return (
-                <TouchableOpacity
-                  key={servicio.id}
-                  style={[
-                    styles.servicioCard,
-                    seleccionado
-                      ? styles.servicioCardSeleccionado
-                      : styles.servicioCardNormal,
-                  ]}
-                  onPress={() => setServicioSeleccionado(servicio.id)}
+            tiposLavado.map((servicio) => (
+              <TouchableOpacity
+                key={servicio.id}
+                style={[styles.servicioCard, styles.servicioCardNormal]}
+                disabled={true} // hace el botón no interactivo
+              >
+                <Text
+                  style={[styles.servicioNombre, styles.servicioNombreNormal]}
                 >
-                  <Text
-                    style={[
-                      styles.servicioNombre,
-                      seleccionado
-                        ? styles.servicioNombreSeleccionado
-                        : styles.servicioNombreNormal,
-                    ]}
-                  >
-                    {servicio.nombre}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })
+                  {servicio.nombre}
+                </Text>
+              </TouchableOpacity>
+            ))
           )}
         </ScrollView>
       </View>
@@ -263,7 +248,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 10,
     color: "#333",
-    marginTop:1,
+    marginTop: 1,
   },
   servicioCard: {
     width: 140,
@@ -274,7 +259,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     borderWidth: 1,
-    
   },
   servicioCardNormal: {
     backgroundColor: "#fff",
