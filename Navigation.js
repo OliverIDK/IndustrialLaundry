@@ -39,6 +39,7 @@ import NotasChofer from "./screens/NotasChofer";
 import NotasLavador from "./screens/NotasLavador";
 import NotasAuxiliar from "./screens/NotasAuxiliar";
 import EditarPerfil from "./screens/EditarPerfil";
+import EditarNota from "./screens/EditarNota";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -250,6 +251,15 @@ function MyStack() {
         component={EditarPerfil}
         options={{
           title: "Usuario",
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="EditarNota"
+        component={EditarNota}
+        options={{
+          title: "Nota",
           presentation: "modal",
           animation: "slide_from_bottom",
         }}

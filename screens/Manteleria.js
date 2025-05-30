@@ -154,7 +154,7 @@ const Manteleria = () => {
 
   // Render de cada nota
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.nota}>
+    <TouchableOpacity style={styles.nota} onPress={() => navigation.navigate("EditarNota", { nota: item })}>
       <Text style={styles.tituloCliente}>
         {item.cliente?.nombre || "Cliente"}
       </Text>
