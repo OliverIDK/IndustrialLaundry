@@ -4,21 +4,46 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  ImageBackground
+  ImageBackground,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { useNavigation } from "@react-navigation/native";
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign } from "@expo/vector-icons";
 import { TextInput } from "react-native-paper";
 import { useFonts } from "expo-font";
-import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Modal, Pressable } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-
 const Manteleria = () => {
+  const toggleEstado = (estado) => {
+    if (estadosSeleccionados.includes(estado)) {
+      setEstadosSeleccionados(estadosSeleccionados.filter((e) => e !== estado));
+    } else {
+      setEstadosSeleccionados([...estadosSeleccionados, estado]);
+    }
+  };
+
+  const [estadosSeleccionados, setEstadosSeleccionados] = useState([]);
+  const ESTADOS = [
+    "Recibido",
+    "En Lavado",
+    "En Secado",
+    "En Planchado y/o Doblado",
+    "Listo para entrega",
+    "En camino",
+    "Entregado",
+  ];
+  const [modalFiltroVisible, setModalFiltroVisible] = useState(false);
   const [notas, setNotas] = useState([]);
   const [tiposLavado, setTiposLavado] = useState({});
   const navigation = useNavigation();
@@ -28,24 +53,31 @@ const Manteleria = () => {
   const [estadoSeleccionado, setEstadoSeleccionado] = useState("");
   const [notaSeleccionada, setNotaSeleccionada] = useState(null);
 
-
   const [fontsLoaded] = useFonts({
-    'Quicksand-Regular': require('../src/Assets/fonts/Quicksand-Regular.ttf'),
-    'Quicksand-SemiBold': require('../src/Assets/fonts/Quicksand-SemiBold.ttf'),
-    'Raleway-Regular': require('../src/Assets/fonts/Raleway-Regular.ttf'),
-    'Montserrat-Regular': require('../src/Assets/fonts/Montserrat-Regular.ttf'),
-    'Poppins-Regular': require('../src/Assets/fonts/Poppins-Regular.ttf'),
+    "Quicksand-Regular": require("../src/Assets/fonts/Quicksand-Regular.ttf"),
+    "Quicksand-SemiBold": require("../src/Assets/fonts/Quicksand-SemiBold.ttf"),
+    "Raleway-Regular": require("../src/Assets/fonts/Raleway-Regular.ttf"),
+    "Montserrat-Regular": require("../src/Assets/fonts/Montserrat-Regular.ttf"),
+    "Poppins-Regular": require("../src/Assets/fonts/Poppins-Regular.ttf"),
   });
 
-
-
   const filtrarNotas = () => {
-    if (busqueda.trim() === "") return notas;
+    let resultado = notas;
 
-    return notas.filter((nota) => {
-      const nombreCliente = nota.cliente?.nombre?.toLowerCase() || "";
-      return nombreCliente.includes(busqueda.toLowerCase());
-    });
+    if (busqueda.trim() !== "") {
+      resultado = resultado.filter((nota) => {
+        const nombreCliente = nota.cliente?.nombre?.toLowerCase() || "";
+        return nombreCliente.includes(busqueda.toLowerCase());
+      });
+    }
+
+    if (estadosSeleccionados.length > 0) {
+      resultado = resultado.filter((nota) =>
+        estadosSeleccionados.includes(nota.estado)
+      );
+    }
+
+    return resultado;
   };
 
   const obtenerProgreso = (estado, metodoEntrega) => {
@@ -68,7 +100,8 @@ const Manteleria = () => {
       "Entregado",
     ];
 
-    const estados = metodoEntrega === "Delivery" ? ESTADOS_DELIVERY : ESTADOS_PICKUP;
+    const estados =
+      metodoEntrega === "Delivery" ? ESTADOS_DELIVERY : ESTADOS_PICKUP;
     const index = estados.indexOf(estado);
 
     if (index === -1) return 0; // Estado no encontrado
@@ -76,8 +109,6 @@ const Manteleria = () => {
     const porcentajePorEstado = 100 / (estados.length - 1); // -1 para que el último sea 100%
     return Math.round(index * porcentajePorEstado);
   };
-
-
 
   // Obtener tipos de lavado
   useEffect(() => {
@@ -128,9 +159,7 @@ const Manteleria = () => {
         {item.cliente?.nombre || "Cliente"}
       </Text>
 
-      <Text style={styles.texto}>
-        Fecha: {formatearFecha(item.fecha)}
-      </Text>
+      <Text style={styles.texto}>Fecha: {formatearFecha(item.fecha)}</Text>
 
       <Text style={styles.texto}>
         Lavado: {tiposLavado[item.tipoLavadoId] || "Sin especificar"}
@@ -171,7 +200,9 @@ const Manteleria = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+      >
         <TextInput
           mode="outlined"
           placeholder="Buscar nota"
@@ -202,24 +233,105 @@ const Manteleria = () => {
 
         {/* Botón de filtro al lado */}
         <TouchableOpacity
-          onPress={() => {
-            console.log("Filtrar presionado");
+          onPress={() => setModalFiltroVisible(true)}
+          style={{
+            marginLeft: 15,
+            marginRight: 15,
+            marginTop: -12,
+            padding: 5,
           }}
-          style={{ marginLeft: 15, marginRight: 15, marginTop: -12, padding: 5 }}
         >
           <ImageBackground
-            source={require('../src/Assets/Imagenes/filtrar.png')}
+            source={require("../src/Assets/Imagenes/filtrar.png")}
             style={{
               width: 25,
               height: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
+              justifyContent: "center",
+              alignItems: "center",
               margin: 2,
-
             }}
             resizeMode="contain"
           />
         </TouchableOpacity>
+        <Modal
+          visible={modalFiltroVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalFiltroVisible(false)}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.3)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            onPress={() => setModalFiltroVisible(false)}
+          >
+            <Pressable
+              style={{
+                backgroundColor: "white",
+                borderRadius: 12,
+                padding: 20,
+                width: "80%",
+                elevation: 5,
+              }}
+              onPress={() => {}}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Quicksand-SemiBold",
+                  marginBottom: 10,
+                }}
+              >
+                Filtrar por estado
+              </Text>
+
+              {ESTADOS.map((estado, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => toggleEstado(estado)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginVertical: 5,
+                  }}
+                >
+                  <View
+                    style={{
+                      height: 20,
+                      width: 20,
+                      borderRadius: 4,
+                      borderWidth: 1,
+                      borderColor: "#004AAD",
+                      backgroundColor: estadosSeleccionados.includes(estado)
+                        ? "#004AAD"
+                        : "white",
+                      marginRight: 10,
+                    }}
+                  />
+                  <Text style={{ fontSize: 14 }}>{estado}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#004AAD",
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 10,
+                  marginTop: 15,
+                }}
+                onPress={() => setModalFiltroVisible(false)}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Aplicar filtros
+                </Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
       <FlatList
         data={filtrarNotas()}
@@ -243,37 +355,40 @@ const Manteleria = () => {
           <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              justifyContent: 'center',
-              alignItems: 'center'
+              backgroundColor: "rgba(0,0,0,0.3)",
+              justifyContent: "center",
+              alignItems: "center",
             }}
             onPress={() => setModalVisible(false)} // 👉 cerrar al hacer clic fuera
           >
             <Pressable
               style={{
-                backgroundColor: 'white',
+                backgroundColor: "white",
                 borderRadius: 12,
                 padding: 20,
-                width: '80%',
-                alignItems: 'center',
+                width: "80%",
+                alignItems: "center",
                 elevation: 5,
               }}
-              onPress={() => { }} // 👉 evitar que el clic dentro cierre el modal
+              onPress={() => {}} // 👉 evitar que el clic dentro cierre el modal
             >
-              <Text style={{
-                fontSize: 16,
-                fontFamily: 'Quicksand-SemiBold',
-                marginBottom: 10
-              }}>Cambiar estado</Text>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Quicksand-SemiBold",
+                  marginBottom: 10,
+                }}
+              >
+                Cambiar estado
+              </Text>
 
               <Picker
                 selectedValue={estadoSeleccionado}
                 onValueChange={(itemValue) => setEstadoSeleccionado(itemValue)}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
               >
-                {(
-                  notaSeleccionada.metodoEntrega === "Delivery"
-                    ? [
+                {(notaSeleccionada.metodoEntrega === "Delivery"
+                  ? [
                       "Recibido",
                       "En Lavado",
                       "En Secado",
@@ -297,7 +412,7 @@ const Manteleria = () => {
 
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#004AAD',
+                  backgroundColor: "#004AAD",
                   paddingVertical: 8,
                   paddingHorizontal: 16,
                   borderRadius: 10,
@@ -315,12 +430,15 @@ const Manteleria = () => {
                   }
                 }}
               >
-                <Text style={{ color: 'white', fontFamily: 'Quicksand-Regular' }}>Guardar</Text>
+                <Text
+                  style={{ color: "white", fontFamily: "Quicksand-Regular" }}
+                >
+                  Guardar
+                </Text>
               </TouchableOpacity>
             </Pressable>
           </Pressable>
         </Modal>
-
       )}
 
       <TouchableOpacity
@@ -354,7 +472,7 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 150,
     justifyContent: "space-between",
-    borderColor: '#c0c0c0',
+    borderColor: "#c0c0c0",
     borderWidth: 1.2,
   },
   tituloCliente: {
@@ -404,16 +522,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
-  }, estadoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  estadoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 10,
     gap: 8, // o usa marginRight en el círculo si gap no funciona
   },
   estadoTextoExterno: {
     fontSize: 12,
-    color: '#004AAD',
-    fontFamily: 'Quicksand-Medium',
+    color: "#004AAD",
+    fontFamily: "Quicksand-Medium",
   },
-
 });

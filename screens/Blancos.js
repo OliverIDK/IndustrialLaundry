@@ -25,6 +25,28 @@ import { Modal, Pressable } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const Blancos = () => {
+  const toggleEstado = (estado) => {
+    if (estadosSeleccionados.includes(estado)) {
+      setEstadosSeleccionados(estadosSeleccionados.filter((e) => e !== estado));
+    } else {
+      setEstadosSeleccionados([...estadosSeleccionados, estado]);
+    }
+  };
+
+  const [estadosSeleccionados, setEstadosSeleccionados] = useState([]);
+  const ESTADOS = [
+    "Recibido",
+    "En Lavado",
+    "En Secado",
+    "En Planchado y/o Doblado",
+    "Listo para entrega",
+    "En camino",
+    "Entregado",
+  ];
+  const [modalFiltroVisible, setModalFiltroVisible] = useState(false);
+
+  const [filtroEstado, setFiltroEstado] = useState(""); // "" = sin filtro
+  const [mostrarFiltroEstado, setMostrarFiltroEstado] = useState(false);
   const [notas, setNotas] = useState([]);
   const [tiposLavado, setTiposLavado] = useState({});
   const navigation = useNavigation();
@@ -43,12 +65,22 @@ const Blancos = () => {
   });
 
   const filtrarNotas = () => {
-    if (busqueda.trim() === "") return notas;
+    let resultado = notas;
 
-    return notas.filter((nota) => {
-      const nombreCliente = nota.cliente?.nombre?.toLowerCase() || "";
-      return nombreCliente.includes(busqueda.toLowerCase());
-    });
+    if (busqueda.trim() !== "") {
+      resultado = resultado.filter((nota) => {
+        const nombreCliente = nota.cliente?.nombre?.toLowerCase() || "";
+        return nombreCliente.includes(busqueda.toLowerCase());
+      });
+    }
+
+    if (estadosSeleccionados.length > 0) {
+      resultado = resultado.filter((nota) =>
+        estadosSeleccionados.includes(nota.estado)
+      );
+    }
+
+    return resultado;
   };
 
   const obtenerProgreso = (estado, metodoEntrega) => {
@@ -204,9 +236,7 @@ const Blancos = () => {
 
         {/* Botón de filtro al lado */}
         <TouchableOpacity
-          onPress={() => {
-            console.log("Filtrar presionado");
-          }}
+          onPress={() => setModalFiltroVisible(true)}
           style={{
             marginLeft: 15,
             marginRight: 15,
@@ -226,6 +256,86 @@ const Blancos = () => {
             resizeMode="contain"
           />
         </TouchableOpacity>
+
+        <Modal
+          visible={modalFiltroVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalFiltroVisible(false)}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.3)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            onPress={() => setModalFiltroVisible(false)}
+          >
+            <Pressable
+              style={{
+                backgroundColor: "white",
+                borderRadius: 12,
+                padding: 20,
+                width: "80%",
+                elevation: 5,
+              }}
+              onPress={() => {}}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Quicksand-SemiBold",
+                  marginBottom: 10,
+                }}
+              >
+                Filtrar por estado
+              </Text>
+
+              {ESTADOS.map((estado, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => toggleEstado(estado)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginVertical: 5,
+                  }}
+                >
+                  <View
+                    style={{
+                      height: 20,
+                      width: 20,
+                      borderRadius: 4,
+                      borderWidth: 1,
+                      borderColor: "#004AAD",
+                      backgroundColor: estadosSeleccionados.includes(estado)
+                        ? "#004AAD"
+                        : "white",
+                      marginRight: 10,
+                    }}
+                  />
+                  <Text style={{ fontSize: 14 }}>{estado}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#004AAD",
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 10,
+                  marginTop: 15,
+                }}
+                onPress={() => setModalFiltroVisible(false)}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Aplicar filtros
+                </Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
       <FlatList
         data={filtrarNotas()}
