@@ -2,279 +2,234 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  ActivityIndicator,
-  FlatList,
-  Button,
-  Modal,
-  TextInput,
-  Pressable,
   TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  ScrollView,
+  Alert,
 } from "react-native";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
-import { IconButton } from "react-native-paper";
 
-const PrecioPrenda = ({ navigation }) => {
-  const [loading, setLoading] = useState(true);
-  const [conPrecio, setConPrecio] = useState([]);
-  const [sinPrecio, setSinPrecio] = useState([]);
+if (Platform.OS === "android") {
+  UIManager.setLayoutAnimationEnabledExperimental &&
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
-  // Modal states
-  const [modalVisible, setModalVisible] = useState(false);
-  const [precioEditado, setPrecioEditado] = useState("");
-  const [precioSeleccionado, setPrecioSeleccionado] = useState(null);
+const AcordeonPrecios = () => {
+  const [expanded, setExpanded] = useState({});
+  const [tiposLavado, setTiposLavado] = useState([]);
+  const [prendas, setPrendas] = useState([]);
+  const [precios, setPrecios] = useState({}); // precios confirmados
+  const [preciosEditados, setPreciosEditados] = useState({}); // cambios pendientes
 
   useEffect(() => {
-    const unsubscribePrendas = onSnapshot(
+    const unsubPrendas = onSnapshot(
       collection(database, "prendas"),
-      (prendasSnapshot) => {
-        const prendas = prendasSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        const unsubscribeTipos = onSnapshot(
-          collection(database, "tipos_lavado"),
-          (tiposSnapshot) => {
-            const tipos = tiposSnapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-
-            const unsubscribePrecios = onSnapshot(
-              collection(database, "precios"),
-              (preciosSnapshot) => {
-                const precios = preciosSnapshot.docs.map((doc) => ({
-                  id: doc.id,
-                  ...doc.data(),
-                }));
-
-                const preciosMap = new Set(
-                  precios.map((p) => `${p.prendaId}_${p.tipoLavadoId}`)
-                );
-
-                const conPrecioTemp = [];
-                const sinPrecioTemp = [];
-
-                for (const prenda of prendas) {
-                  for (const tipo of tipos) {
-                    const key = `${prenda.id}_${tipo.id}`;
-                    if (preciosMap.has(key)) {
-                      const precioItem = precios.find(
-                        (p) =>
-                          p.prendaId === prenda.id && p.tipoLavadoId === tipo.id
-                      );
-                      conPrecioTemp.push({
-                        id: precioItem.id, // ID del documento en 'precios'
-                        prenda,
-                        tipo,
-                        precio: precioItem.precio,
-                      });
-                    } else {
-                      sinPrecioTemp.push({
-                        prenda,
-                        tipo,
-                      });
-                    }
-                  }
-                }
-
-                setConPrecio(conPrecioTemp);
-                setSinPrecio(sinPrecioTemp);
-                setLoading(false);
-              }
-            );
-
-            return () => unsubscribePrecios();
-          }
-        );
-
-        return () => unsubscribeTipos();
+      (snapshot) => {
+        setPrendas(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       }
     );
 
-    return () => unsubscribePrendas();
+    const unsubTipos = onSnapshot(
+      collection(database, "tipos_lavado"),
+      (snapshot) => {
+        setTiposLavado(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+      }
+    );
+
+    const unsubPrecios = onSnapshot(
+      collection(database, "precios"),
+      (snapshot) => {
+        const preciosData = {};
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          preciosData[`${data.tipoLavadoId}_${data.prendaId}`] = {
+            id: doc.id,
+            precio: data.precio,
+          };
+        });
+        setPrecios(preciosData);
+      }
+    );
+
+    return () => {
+      unsubPrendas();
+      unsubTipos();
+      unsubPrecios();
+    };
   }, []);
 
-  const abrirModalEdicion = (item) => {
-    setPrecioSeleccionado(item);
-    setPrecioEditado(item.precio.toString());
-    setModalVisible(true);
+  const handleExpand = (id) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const guardarNuevoPrecio = async () => {
-    if (!precioSeleccionado || precioEditado === "") return;
+  // Solo actualiza estado local de precios editados (no guarda a BD)
+  const handlePrecioChange = (tipoLavadoId, prendaId, nuevoPrecio) => {
+    const key = `${tipoLavadoId}_${prendaId}`;
+    const precio = nuevoPrecio; // guardamos como string para que se vea en input
+    setPreciosEditados((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        tipoLavadoId,
+        prendaId,
+        precio,
+      },
+    }));
+  };
+
+  // Confirmar y guardar el cambio en Firestore
+  const confirmarCambio = async (key) => {
+    const data = preciosEditados[key];
+    if (!data) return;
+
+    const docId = precios[key]?.id || key;
+    const precioNum = parseFloat(data.precio);
+    if (isNaN(precioNum)) {
+      Alert.alert("Error", "Precio inválido");
+      return;
+    }
 
     try {
-      const precioRef = doc(database, "precios", precioSeleccionado.id);
-      await updateDoc(precioRef, {
-        precio: parseFloat(precioEditado),
+      await setDoc(doc(database, "precios", docId), {
+        tipoLavadoId: data.tipoLavadoId,
+        prendaId: data.prendaId,
+        precio: precioNum,
       });
-      setModalVisible(false);
+      // Actualizar estado precios confirmado con nuevo valor
+      setPrecios((prev) => ({
+        ...prev,
+        [key]: { id: docId, precio: precioNum },
+      }));
+      // Remover de editados porque ya se guardó
+      setPreciosEditados((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+      Alert.alert("Éxito", "Precio actualizado");
     } catch (error) {
       console.error("Error al actualizar precio:", error);
+      Alert.alert("Error", "No se pudo actualizar el precio");
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196f3" />
-        <Text>Cargando datos...</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Precios Asignados</Text>
-      <FlatList
-        data={conPrecio}
-        keyExtractor={(item, index) =>
-          `${item.prenda.id}_${item.tipo.id}_${index}`
-        }
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.text}>
-              {item.prenda.nombre} - {item.tipo.nombre}: ${item.precio}
-            </Text>
-            <IconButton
-              icon="dots-vertical"
-              size={24}
-              onPress={() => abrirModalEdicion(item)}
-            />
-          </View>
-        )}
-      />
+    <ScrollView style={styles.container}>
+      {tiposLavado.map((tipo) => (
+        <View key={tipo.id}>
+          <TouchableOpacity
+            style={styles.header}
+            onPress={() => handleExpand(tipo.id)}
+          >
+            <Text style={styles.headerText}>{tipo.nombre}</Text>
+          </TouchableOpacity>
 
-      <Text style={styles.title}>Sin Precio</Text>
-      <FlatList
-        data={sinPrecio}
-        keyExtractor={(item, index) =>
-          `${item.prenda.id}_${item.tipo.id}_${index}`
-        }
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.text}>
-              {item.prenda.nombre} - {item.tipo.nombre}
-            </Text>
-            <Button
-              title="Asignar Precio"
-              color="#2196f3"
-              onPress={() =>
-                navigation.navigate("AgregarPrecio", {
-                  prendaId: item.prenda.id,
-                  tipoLavadoId: item.tipo.id,
-                  prendaNombre: item.prenda.nombre,
-                  tipoNombre: item.tipo.nombre,
-                })
-              }
-            />
-          </View>
-        )}
-      />
+          {expanded[tipo.id] &&
+            prendas.map((prenda) => {
+              const key = `${tipo.id}_${prenda.id}`;
 
-      {/* Modal para editar precio */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar Precio</Text>
-            <TextInput
-              value={precioEditado}
-              onChangeText={setPrecioEditado}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <View style={styles.modalButtons}>
-              <Button title="Cancelar" onPress={() => setModalVisible(false)} />
-              <Button
-                title="Guardar"
-                onPress={guardarNuevoPrecio}
-                color="#2196f3"
-              />
-            </View>
-          </View>
+              // Precio original confirmado
+              const precioConfirmado = precios[key]?.precio?.toString() || "";
+
+              // Precio en edición (cadena)
+              const precioEditado = preciosEditados[key]?.precio;
+
+              // Mostrar el precio editado si existe, si no el confirmado
+              const valorMostrar =
+                precioEditado !== undefined ? precioEditado : precioConfirmado;
+
+              // ¿Hay un cambio sin guardar?
+              const hayCambio =
+                precioEditado !== undefined && precioEditado !== precioConfirmado;
+
+              return (
+                <View key={key} style={styles.itemRow}>
+                  <Text style={styles.itemText}>{prenda.nombre}</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={valorMostrar}
+                    onChangeText={(text) =>
+                      handlePrecioChange(tipo.id, prenda.id, text)
+                    }
+                    placeholder="$"
+                  />
+                  {hayCambio && (
+                    <TouchableOpacity
+                      style={styles.confirmButton}
+                      onPress={() => confirmarCambio(key)}
+                    >
+                      <Text style={styles.confirmButtonText}>✔️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
         </View>
-      </Modal>
-    </View>
+      ))}
+    </ScrollView>
   );
 };
 
-export default PrecioPrenda;
+export default AcordeonPrecios;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     paddingTop: 40,
-    backgroundColor: '#fff',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
-    color: "#2196f3",
-  },
-  item: {
-    backgroundColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 16,
-    flex: 1,
-  },
-  editButton: {
-    marginLeft: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  editText: {
-    fontSize: 24,
-    color: "#2196f3",
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: "#000000aa",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
+    paddingHorizontal: 16,
     backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 8,
-    width: "80%",
-    alignItems: "center",
   },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 10,
+  header: {
+    padding: 12,
+    backgroundColor: "#007BFF",
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  headerText: {
+    color: "#fff",
     fontWeight: "bold",
+    fontSize: 16,
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#f1f1f1",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  itemText: {
+    flex: 1,
+    fontSize: 15,
   },
   input: {
+    width: 80,
+    padding: 6,
+    backgroundColor: "#fff",
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 8,
-    width: "100%",
-    marginBottom: 20,
-    textAlign: "center",
+    textAlign: "right",
+    marginRight: 8,
   },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
+  confirmButton: {
+    backgroundColor: "#28a745",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
-  
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });
