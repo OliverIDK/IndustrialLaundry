@@ -190,14 +190,19 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 12,
-    backgroundColor: "#007BFF",
+    marginBottom: 12,
+    backgroundColor: "#fff",
     borderRadius: 8,
-    marginBottom: 4,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    height: 60,
+    
   },
   headerText: {
-    color: "#fff",
+    color: "#414040",
     fontWeight: "bold",
     fontSize: 16,
+    paddingTop: 5,
   },
   itemRow: {
     flexDirection: "row",

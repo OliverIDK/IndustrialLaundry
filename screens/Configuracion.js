@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,30 +7,30 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-} from "react-native"
-import { signOut, getAuth } from "firebase/auth"
-import { auth, database } from "../src/config/fb"
-import { doc, getDoc } from "firebase/firestore"
-import Constants from "expo-constants"
+} from "react-native";
+import { signOut, getAuth } from "firebase/auth";
+import { auth, database } from "../src/config/fb";
+import { doc, getDoc } from "firebase/firestore";
+import Constants from "expo-constants";
 
 const appVersion =
-  Constants.manifest?.version || Constants.expoConfig?.version || "1.0.0"
+  Constants.manifest?.version || Constants.expoConfig?.version || "1.0.0";
 
 const Configuracion = ({ navigation }) => {
-  const [usuario, setUsuario] = useState({})
-  const [cargando, setCargando] = useState(true)
+  const [usuario, setUsuario] = useState({});
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const obtenerUsuario = async () => {
-      const user = getAuth().currentUser
-      if (!user) return
+      const user = getAuth().currentUser;
+      if (!user) return;
 
       try {
-        const docRef = doc(database, "usuarios", user.uid)
-        const docSnap = await getDoc(docRef)
+        const docRef = doc(database, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data()
+          const data = docSnap.data();
           setUsuario({
             id: user.uid,
             nombre: data.nombre || "",
@@ -39,7 +39,7 @@ const Configuracion = ({ navigation }) => {
             rol: data.rol || "",
             direccion: data.direccion || "",
             telefono: data.telefono || "",
-          })
+          });
         } else {
           setUsuario({
             id: user.uid,
@@ -49,36 +49,36 @@ const Configuracion = ({ navigation }) => {
             rol: "",
             direccion: "",
             telefono: "",
-          })
+          });
         }
       } catch (error) {
-        console.error("Error al obtener usuario:", error)
+        console.error("Error al obtener usuario:", error);
       } finally {
-        setCargando(false)
+        setCargando(false);
       }
-    }
+    };
 
-    obtenerUsuario()
-  }, [])
+    obtenerUsuario();
+  }, []);
 
   const cerrarSesion = async () => {
     try {
-      await signOut(auth)
+      await signOut(auth);
       navigation.reset({
         index: 0,
         routes: [{ name: "Login" }],
-      })
+      });
     } catch (error) {
-      console.error("Error al cerrar sesión:", error)
+      console.error("Error al cerrar sesión:", error);
     }
-  }
+  };
 
   if (cargando) {
     return (
       <View style={styles.container}>
         <Text>Cargando datos...</Text>
       </View>
-    )
+    );
   }
 
   return (
@@ -92,9 +92,7 @@ const Configuracion = ({ navigation }) => {
           }
           style={styles.profileImage}
         />
-        <Text style={styles.greeting}>
-          Hola, {usuario.nombre || "Usuario"}
-        </Text>
+        <Text style={styles.greeting}>Hola, {usuario.nombre || "Usuario"}</Text>
         <Text style={styles.subtitle}>{usuario.rol}</Text>
         <Text style={styles.subtitle}>{usuario.email}</Text>
       </View>
@@ -112,13 +110,15 @@ const Configuracion = ({ navigation }) => {
 
       <View style={styles.footer}>
         <Text style={styles.version}>Versión {appVersion}</Text>
-        <Button title="Cerrar sesión" onPress={cerrarSesion} color="#ff3b30" />
+        <TouchableOpacity style={styles.logOut} onPress={cerrarSesion}>
+          <Text style={styles.logOutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
-  )
-}
+  );
+};
 
-export default Configuracion
+export default Configuracion;
 
 const styles = StyleSheet.create({
   container: {
@@ -168,4 +168,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#888",
   },
-})
+  logOut: {
+    backgroundColor: "#ff3b30", // rojo iOS
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    alignSelf: "center",
+    
+  },
+
+  logOutText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});

@@ -38,7 +38,7 @@ const Prendas = ({ navigation }) => {
       (snapshot) => {
         const lista = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
         setPrendas(lista);
         setLoading(false);
@@ -63,13 +63,15 @@ const Prendas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-     
       <FlatList
         data={prendas}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }} // <--- Espacio adicional
         renderItem={({ item }) => (
           <View style={styles.producto}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
               <View>
                 <Text style={styles.nombre}>{item.nombre}</Text>
                 <Text>Tipo: {item.tipo}</Text>
@@ -134,7 +136,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 40,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
@@ -144,9 +146,11 @@ const styles = StyleSheet.create({
   producto: {
     padding: 12,
     marginBottom: 12,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#fff",
     borderRadius: 8,
     flexDirection: "column",
+    borderColor: "#ccc",
+    borderWidth: 1,
   },
   nombre: {
     fontSize: 18,
@@ -157,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-   boton: {
+  boton: {
     position: "absolute",
     bottom: 20,
     right: 20,
@@ -170,5 +174,4 @@ const styles = StyleSheet.create({
     zIndex: 100,
     elevation: 2,
   },
-  
 });

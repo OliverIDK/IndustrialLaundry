@@ -61,13 +61,18 @@ const TipoLavado = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-     
       <FlatList
         data={tipos}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Text style={styles.nombre}>{item.nombre}</Text>
               <Menu
                 visible={visibleMenuId === item.id}
@@ -110,7 +115,7 @@ const TipoLavado = ({ navigation }) => {
           </View>
         )}
       />
-     <TouchableOpacity
+      <TouchableOpacity
         style={styles.boton}
         onPress={() => navigation.navigate("AgregarTipoLavado")}
       >
@@ -127,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 40,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
@@ -137,8 +142,10 @@ const styles = StyleSheet.create({
   item: {
     padding: 12,
     marginBottom: 12,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#fff",
     borderRadius: 8,
+    borderColor: "#ccc",
+    borderWidth: 1,
   },
   nombre: {
     fontSize: 18,
@@ -149,7 +156,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-   boton: {
+  boton: {
     position: "absolute",
     bottom: 20,
     right: 20,
