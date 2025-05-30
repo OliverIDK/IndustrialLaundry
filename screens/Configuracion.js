@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
-  Button,
   Image,
   TouchableOpacity,
   ScrollView,
@@ -12,6 +11,7 @@ import { signOut, getAuth } from "firebase/auth";
 import { auth, database } from "../src/config/fb";
 import { doc, getDoc } from "firebase/firestore";
 import Constants from "expo-constants";
+import { useFocusEffect } from "@react-navigation/native";
 
 const appVersion =
   Constants.manifest?.version || Constants.expoConfig?.version || "1.0.0";
@@ -20,46 +20,49 @@ const Configuracion = ({ navigation }) => {
   const [usuario, setUsuario] = useState({});
   const [cargando, setCargando] = useState(true);
 
-  useEffect(() => {
-    const obtenerUsuario = async () => {
-      const user = getAuth().currentUser;
-      if (!user) return;
+  useFocusEffect(
+    React.useCallback(() => {
+      const obtenerUsuario = async () => {
+        const user = getAuth().currentUser;
+        if (!user) return;
 
-      try {
-        const docRef = doc(database, "usuarios", user.uid);
-        const docSnap = await getDoc(docRef);
+        try {
+          setCargando(true);
+          const docRef = doc(database, "usuarios", user.uid);
+          const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setUsuario({
-            id: user.uid,
-            nombre: data.nombre || "",
-            email: data.email || user.email || "",
-            avatarUrl: data.avatarUrl || null,
-            rol: data.rol || "",
-            direccion: data.direccion || "",
-            telefono: data.telefono || "",
-          });
-        } else {
-          setUsuario({
-            id: user.uid,
-            nombre: "",
-            email: user.email || "",
-            avatarUrl: null,
-            rol: "",
-            direccion: "",
-            telefono: "",
-          });
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setUsuario({
+              id: user.uid,
+              nombre: data.nombre || "",
+              email: data.email || user.email || "",
+              avatarUrl: data.avatarUrl || null,
+              rol: data.rol || "",
+              direccion: data.direccion || "",
+              telefono: data.telefono || "",
+            });
+          } else {
+            setUsuario({
+              id: user.uid,
+              nombre: "",
+              email: user.email || "",
+              avatarUrl: null,
+              rol: "",
+              direccion: "",
+              telefono: "",
+            });
+          }
+        } catch (error) {
+          console.error("Error al obtener usuario:", error);
+        } finally {
+          setCargando(false);
         }
-      } catch (error) {
-        console.error("Error al obtener usuario:", error);
-      } finally {
-        setCargando(false);
-      }
-    };
+      };
 
-    obtenerUsuario();
-  }, []);
+      obtenerUsuario();
+    }, [])
+  );
 
   const cerrarSesion = async () => {
     try {
@@ -100,7 +103,7 @@ const Configuracion = ({ navigation }) => {
       <TouchableOpacity
         style={styles.button}
         onPress={() =>
-          navigation.navigate("EditarUsuario", {
+          navigation.navigate("EditarPerfil", {
             usuario,
           })
         }
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
     color: "#888",
   },
   logOut: {
-    backgroundColor: "#ff3b30", // rojo iOS
+    backgroundColor: "#ff3b30",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -177,9 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 20,
     alignSelf: "center",
-    
   },
-
   logOutText: {
     color: "#fff",
     fontSize: 16,

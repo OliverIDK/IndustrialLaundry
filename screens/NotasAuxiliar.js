@@ -22,6 +22,7 @@ import { TextInput } from "react-native-paper";
 import { useFonts } from "expo-font";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Picker } from "@react-native-picker/picker";
+import { AntDesign } from "@expo/vector-icons";
 
 const NotasAuxiliar = () => {
   const [notas, setNotas] = useState([]);
@@ -277,6 +278,12 @@ const NotasAuxiliar = () => {
           </Pressable>
         </Modal>
       )}
+      <TouchableOpacity
+        style={styles.boton}
+        onPress={() => navigation.navigate("AgregarNota")}
+      >
+        <AntDesign name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -345,5 +352,17 @@ estadoTextoExterno: {
   },
   fila: {
     justifyContent: "space-between",
+  },
+    boton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#004AAD",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
   },
 });

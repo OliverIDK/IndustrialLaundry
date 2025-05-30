@@ -22,7 +22,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { database } from "../src/config/fb";
 import { supabase } from "../src/config/sp";
 
-const EditarUsuario = ({ route, navigation }) => {
+const EditarPerfil = ({ route, navigation }) => {
   const { usuario } = route.params;
 
   const [rol, setRol] = useState(usuario.rol || "");
@@ -54,118 +54,116 @@ const EditarUsuario = ({ route, navigation }) => {
   };
 
   const subirAvatarSupabase = async (uri, uid) => {
-  try {
-    setUploading(true);
+    try {
+      setUploading(true);
 
-    const fileExt = uri.split(".").pop();
-    const fileName = `${uid}.${fileExt}`;
+      const fileExt = uri.split(".").pop();
+      const fileName = `${uid}.${fileExt}`;
 
-    // Eliminar imagen anterior si existe
-    const { error: deleteError } = await supabase.storage
-      .from("avatars")
-      .remove([fileName]);
+      // Eliminar imagen anterior si existe
+      const { error: deleteError } = await supabase.storage
+        .from("avatars")
+        .remove([fileName]);
 
-    if (deleteError && deleteError.message !== "The resource was not found") {
-      console.warn("No se pudo eliminar la imagen anterior:", deleteError.message);
-    }
+      if (deleteError && deleteError.message !== "The resource was not found") {
+        console.warn("No se pudo eliminar la imagen anterior:", deleteError.message);
+      }
 
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(fileName, binary, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: `image/${fileExt}`,
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
 
-    if (uploadError) throw uploadError;
+      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
-    // Obtener URL pública y agregar parámetro para evitar caché
-    const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
-    const publicUrl = `${data.publicUrl}?t=${Date.now()}`; // Esto fuerza al navegador a cargar la nueva imagen
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, binary, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: `image/${fileExt}`,
+        });
 
-    return publicUrl;
-  } catch (error) {
-    Alert.alert("Error", "No se pudo subir la imagen");
-    console.error(error);
-    return null;
-  } finally {
-    setUploading(false);
-  }
-};
+      if (uploadError) throw uploadError;
 
+      // Obtener URL pública y agregar parámetro para evitar caché
+      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`; // Esto fuerza al navegador a cargar la nueva imagen
+
+      return publicUrl;
+    } catch (error) {
+      Alert.alert("Error", "No se pudo subir la imagen");
+      console.error(error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleGuardar = async () => {
-  if (!nombre.trim() || !rol.trim()) {
-    Alert.alert("Validación", "Por favor completa todos los campos");
-    return;
-  }
-
-  if (rol === "Cliente") {
-    const telefonoTrim = telefono.trim();
-    const telefonoRegex = /^[0-9]{10}$/; // exactamente 10 dígitos numéricos
-
-    if (!telefonoTrim) {
-      Alert.alert("Validación", "El teléfono es obligatorio para clientes");
+    if (!nombre.trim() || !rol.trim()) {
+      Alert.alert("Validación", "Por favor completa todos los campos");
       return;
     }
-
-    if (!telefonoRegex.test(telefonoTrim)) {
-      Alert.alert(
-        "Validación",
-        "El teléfono debe contener exactamente 10 números"
-      );
-      return;
-    }
-  }
-
-  setUploading(true);
-
-  try {
-    let avatarUrl = usuario.avatarUrl || null;
-
-    // Si la imagen cambió, súbela y elimina la anterior
-    if (
-      avatarUri &&
-      avatarUri !== usuario.avatarUrl &&
-      !avatarUri.startsWith("https://")
-    ) {
-      avatarUrl = await subirAvatarSupabase(
-        avatarUri,
-        usuario.uid,
-        usuario.avatarUrl
-      );
-    }
-
-    let datosActualizar = {
-      nombre: nombre.trim(),
-      rol: rol.trim(),
-      avatarUrl,
-    };
 
     if (rol === "Cliente") {
-      datosActualizar.direccion = direccion.trim();
-      datosActualizar.telefono = telefono.trim();
+      const telefonoTrim = telefono.trim();
+      const telefonoRegex = /^[0-9]{10}$/; // exactamente 10 dígitos numéricos
+
+      if (!telefonoTrim) {
+        Alert.alert("Validación", "El teléfono es obligatorio para clientes");
+        return;
+      }
+
+      if (!telefonoRegex.test(telefonoTrim)) {
+        Alert.alert(
+          "Validación",
+          "El teléfono debe contener exactamente 10 números"
+        );
+        return;
+      }
     }
 
-    const usuarioRef = doc(database, "usuarios", usuario.uid);
-    await updateDoc(usuarioRef, datosActualizar);
+    setUploading(true);
 
-    Alert.alert("Éxito", "Usuario actualizado correctamente");
-    navigation.goBack();
-  } catch (error) {
-    Alert.alert("Error", "No se pudo actualizar el usuario");
-    console.error(error);
-  } finally {
-    setUploading(false);
-  }
-};
+    try {
+      let avatarUrl = usuario.avatarUrl || null;
 
+      // Si la imagen cambió, súbela y elimina la anterior
+      if (
+        avatarUri &&
+        avatarUri !== usuario.avatarUrl &&
+        !avatarUri.startsWith("https://")
+      ) {
+        avatarUrl = await subirAvatarSupabase(
+          avatarUri,
+          usuario.uid,
+          usuario.avatarUrl
+        );
+      }
+
+      let datosActualizar = {
+        nombre: nombre.trim(),
+        rol: rol.trim(),
+        avatarUrl,
+      };
+
+      if (rol === "Cliente") {
+        datosActualizar.direccion = direccion.trim();
+        datosActualizar.telefono = telefono.trim();
+      }
+
+      const usuarioRef = doc(database, "usuarios", usuario.uid);
+      await updateDoc(usuarioRef, datosActualizar);
+
+      Alert.alert("Éxito", "Usuario actualizado correctamente");
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo actualizar el usuario");
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (uploading) {
     return (
@@ -220,14 +218,7 @@ const EditarUsuario = ({ route, navigation }) => {
         />
 
         <Text style={styles.label}>Rol</Text>
-        <Picker selectedValue={rol} style={styles.input} onValueChange={setRol}>
-          <Picker.Item label="Lavador" value="Lavador" />
-          <Picker.Item label="Auxiliar" value="Auxiliar" />
-          <Picker.Item label="Supervisor" value="Supervisor" />
-          <Picker.Item label="Cliente" value="Cliente" />
-          <Picker.Item label="Chofer" value="Chofer" />
-          <Picker.Item label="Administrador" value="Administrador" />
-        </Picker>
+        <Text style={[styles.input, styles.disabledInput]}>{rol}</Text>
 
         {rol === "Cliente" && (
           <>
@@ -258,7 +249,7 @@ const EditarUsuario = ({ route, navigation }) => {
   );
 };
 
-export default EditarUsuario;
+export default EditarPerfil;
 
 const styles = StyleSheet.create({
   container: {

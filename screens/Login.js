@@ -5,6 +5,7 @@ import { TextInput } from 'react-native-paper';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../src/config/fb';
 import Icon from "@expo/vector-icons/Entypo";
+import { Alert } from 'react-native';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -18,14 +19,36 @@ const Login = ({ navigation }) => {
   });
 
   const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.navigate('AuthLoadingScreen');
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Correo o contraseña inválidos');
+  // Validar campos vacíos
+  if (!email.trim()) {
+    Alert.alert('Error', 'Por favor ingresa tu correo electrónico');
+    return;
+  }
+  if (!password) {
+    Alert.alert('Error', 'Por favor ingresa tu contraseña');
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    navigation.navigate('AuthLoadingScreen');
+  } catch (error) {
+    console.error(error);
+    // Puedes afinar el mensaje según el código de error de Firebase
+    let message = 'Correo o contraseña inválidos';
+    if (error.code === 'auth/invalid-email') {
+      message = 'El correo electrónico no es válido';
+    } else if (error.code === 'auth/user-not-found') {
+      message = 'No se encontró una cuenta con ese correo';
+    } else if (error.code === 'auth/wrong-password') {
+      message = 'Contraseña incorrecta';
+    } else if (error.code === 'auth/user-disabled') {
+      message = 'Esta cuenta ha sido deshabilitada';
     }
-  };
+
+    Alert.alert('Error', message);
+  }
+};
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

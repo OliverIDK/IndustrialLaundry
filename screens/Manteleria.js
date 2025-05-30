@@ -104,9 +104,9 @@ const Manteleria = () => {
       metodoEntrega === "Delivery" ? ESTADOS_DELIVERY : ESTADOS_PICKUP;
     const index = estados.indexOf(estado);
 
-    if (index === -1) return 0; // Estado no encontrado
+    if (index === -1) return 0; 
 
-    const porcentajePorEstado = 100 / (estados.length - 1); // -1 para que el último sea 100%
+    const porcentajePorEstado = 100 / (estados.length - 1); 
     return Math.round(index * porcentajePorEstado);
   };
 

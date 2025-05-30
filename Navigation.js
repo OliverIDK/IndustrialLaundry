@@ -38,6 +38,7 @@ import EditarUsuario from "./screens/EditarUsuario";
 import NotasChofer from "./screens/NotasChofer";
 import NotasLavador from "./screens/NotasLavador";
 import NotasAuxiliar from "./screens/NotasAuxiliar";
+import EditarPerfil from "./screens/EditarPerfil";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -244,6 +245,15 @@ function MyStack() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="EditarPerfil"
+        component={EditarPerfil}
+        options={{
+          title: "Usuario",
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack.Navigator>
   );
 }
@@ -318,11 +328,7 @@ function TabGroupAuxiliar() {
         },
       })}
     >
-      <Tab.Screen
-        name="Servicios"
-        component={Taps}
-        options={{ title: "Crear" }}
-      />
+      
       <Tab.Screen
         name="Tabs"
         component={NotasAuxiliar}
@@ -393,8 +399,6 @@ function TabGroupSupervisor() {
       })}
     >
       <Tab.Screen name="Tabs" component={Taps} options={{ title: "Notas" }} />
-      <Tab.Screen name="Lavar" component={NotasLavador} />
-      <Tab.Screen name="Planchar" component={NotasAuxiliar} />
       <Tab.Screen name="Inventario" component={Inventario} />
       <Tab.Screen name="Configuracion" component={Configuracion} />
     </Tab.Navigator>

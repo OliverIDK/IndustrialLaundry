@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
+import { doc, onSnapshot } from "firebase/firestore";
+import { database } from "../src/config/fb"; // ajusta esta ruta a tu config de firebase
 
 const estados = [
   "Recibido",
@@ -18,14 +21,56 @@ const estados = [
 ];
 
 const Steps = ({ route, navigation }) => {
-  const { nota } = route.params;
-  const estadoActualIndex = estados.includes(nota.estado)
+  const { id } = route.params;
+
+  const [nota, setNota] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const docRef = doc(database, "notas", id);
+
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setNota({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setNota(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error al escuchar la nota:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [id]);
+
+  const estadoActualIndex = nota && estados.includes(nota.estado)
     ? estados.indexOf(nota.estado)
     : 0;
 
   const handleVerMapa = () => {
     navigation.navigate("Mapa");
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.center, { flex: 1 }]}>
+        <ActivityIndicator size="large" color="#004aad" />
+      </View>
+    );
+  }
+
+  if (!nota) {
+    return (
+      <View style={[styles.center, { flex: 1 }]}>
+        <Text style={{ fontSize: 16, color: "#555" }}>Nota no encontrada.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -87,8 +132,7 @@ const Steps = ({ route, navigation }) => {
                     borderRadius: size / 2,
                     borderWidth: 2,
                     borderColor: isActive || isCompleted ? "#2196f3" : "#ccc",
-                    backgroundColor:
-                      isActive || isCompleted ? "#2196f3" : "#fff",
+                    backgroundColor: isActive || isCompleted ? "#2196f3" : "#fff",
                     justifyContent: "center",
                     alignItems: "center",
                     zIndex: 2,
@@ -261,7 +305,7 @@ const styles = StyleSheet.create({
   stepTextActive: {
     color: "#2196f3",
     fontWeight: "bold",
-    fontSize: 18, // opcional para que sobresalga más
+    fontSize: 18,
   },
   stepTextCompleted: {
     color: "#2196f3",
@@ -278,5 +322,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  center: {
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

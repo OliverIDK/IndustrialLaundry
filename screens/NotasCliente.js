@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, database } from "../src/config/fb";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -45,16 +45,16 @@ const NotasCliente = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchNotas = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-        const notasRef = collection(database, "notas");
-        const qNotas = query(notasRef, where("cliente.uid", "==", user.uid));
-        const notasSnap = await getDocs(qNotas);
+    const notasRef = collection(database, "notas");
+    const qNotas = query(notasRef, where("cliente.uid", "==", user.uid));
 
-        const notasData = notasSnap.docs
+    const unsubscribe = onSnapshot(
+      qNotas,
+      (snapshot) => {
+        const notasData = snapshot.docs
           .map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -62,14 +62,16 @@ const NotasCliente = ({ navigation }) => {
           .filter((nota) => nota.estado !== "Entregado");
 
         setNotas(notasData);
-      } catch (error) {
-        console.error("Error al cargar notas:", error);
-      } finally {
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error al escuchar notas:", error);
         setLoading(false);
       }
-    };
+    );
 
-    fetchNotas();
+    // Limpia el listener cuando el componente se desmonte
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -99,7 +101,7 @@ const NotasCliente = ({ navigation }) => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.notaItem}
-            onPress={() => navigation.navigate("Steps", { nota: item })}
+            onPress={() => navigation.navigate("Steps", { id: item.id })}
           >
             <View style={styles.notaContent}>
               <View style={{ flex: 1 }}>

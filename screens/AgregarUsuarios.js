@@ -85,46 +85,74 @@ const AgregarUsuarios = ({ navigation }) => {
     }
   };
 
-  const handleRegistrar = async () => {
-    if (!email || !nombre || !password) {
-      Alert.alert("Error", "Rellena todos los campos obligatorios");
+  const validarEmail = (email) => {
+  // Expresión regular básica para validar email
+  const re = /\S+@\S+\.\S+/;
+  return re.test(email);
+};
+
+const handleRegistrar = async () => {
+  // Validar campos obligatorios
+  if (!email || !nombre || !password || (rol === "Cliente" && (!direccion || !telefono))) {
+    Alert.alert("Error", "Por favor, rellena todos los campos obligatorios");
+    return;
+  }
+
+  // Validar formato de email
+  if (!validarEmail(email)) {
+    Alert.alert("Error", "Por favor, ingresa un correo electrónico válido");
+    return;
+  }
+
+  // Validar contraseña mínima 6 caracteres (puedes ajustar esta regla)
+  if (password.length < 6) {
+    Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
+    return;
+  }
+
+  // Validar teléfono solo si el rol es Cliente
+  if (rol === "Cliente") {
+    const telefonoSinEspacios = telefono.replace(/\s/g, "");
+    if (!/^\d{10}$/.test(telefonoSinEspacios)) {
+      Alert.alert("Error", "El teléfono debe tener exactamente 10 dígitos");
       return;
     }
+  }
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
 
-      let avatarUrl = null;
-      if (avatarUri) {
-        avatarUrl = await subirAvatarSupabase(avatarUri, uid);
-      }
-
-      const usuarioData = {
-        uid,
-        email,
-        nombre,
-        rol,
-      };
-
-      if (rol === "Cliente") {
-        usuarioData.direccion = direccion;
-        usuarioData.telefono = telefono;
-      }
-
-      if (avatarUrl) {
-        usuarioData.avatarUrl = avatarUrl;
-      }
-
-      await setDoc(doc(database, "usuarios", uid), usuarioData);
-
-      Alert.alert("Éxito", "Usuario registrado correctamente");
-      navigation.goBack();
-    } catch (error) {
-      console.error("Error al registrar usuario:", error);
-      Alert.alert("Error", error.message);
+    let avatarUrl = null;
+    if (avatarUri) {
+      avatarUrl = await subirAvatarSupabase(avatarUri, uid);
     }
-  };
+
+    const usuarioData = {
+      uid,
+      email,
+      nombre,
+      rol,
+    };
+
+    if (rol === "Cliente") {
+      usuarioData.direccion = direccion;
+      usuarioData.telefono = telefono;
+    }
+
+    if (avatarUrl) {
+      usuarioData.avatarUrl = avatarUrl;
+    }
+
+    await setDoc(doc(database, "usuarios", uid), usuarioData);
+
+    Alert.alert("Éxito", "Usuario registrado correctamente");
+    navigation.goBack();
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    Alert.alert("Error", error.message);
+  }
+};
 
   return (
     <ScrollView contentContainerStyle={{ backgroundColor: '#fff' }}>
