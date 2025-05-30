@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Button } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import * as Location from 'expo-location';
+import { onValue, ref } from 'firebase/database';
+import { realtimeDB } from '../src/config/fb';
 
 const puntosRuta = [
   { latitude: 20.65189410225203, longitude: -105.21876069886645 },
@@ -16,6 +17,7 @@ const puntosRuta = [
 
 const Mapa = () => {
   const [region, setRegion] = useState(null);
+  const [mapType, setMapType] = useState('standard'); // 'standard' o 'satellite'
   const mapRef = useRef(null);
 
   const carritoCoord = useRef(
@@ -27,52 +29,51 @@ const Mapa = () => {
     })
   ).current;
 
-  const getLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permiso de ubicación denegado');
-      return;
-    }
+  useEffect(() => {
+    const coordRef = ref(realtimeDB, 'carrito/ubicacion');
 
-    const loc = await Location.getCurrentPositionAsync({});
+    const unsubscribe = onValue(coordRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log('Datos recibidos de Realtime DB:', data);
+
+      if (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+        const { latitude, longitude } = data;
+
+        carritoCoord.timing({
+          latitude,
+          longitude,
+          duration: 1000,
+          useNativeDriver: false,
+        }).start();
+
+        if (mapRef.current) {
+          mapRef.current.animateCamera(
+            {
+              center: { latitude, longitude },
+              zoom: 16,
+            },
+            { duration: 1000 }
+          );
+        }
+      } else {
+        console.warn('Datos inválidos para carrito:', data);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     setRegion({
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
+      latitude: puntosRuta[0].latitude,
+      longitude: puntosRuta[0].longitude,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     });
-  };
-
-  useEffect(() => {
-    getLocation();
   }, []);
 
-  const iniciarRecorrido = async () => {
-    for (let i = 0; i < puntosRuta.length; i++) {
-      const point = puntosRuta[i];
-
-      await new Promise((resolve) => {
-        carritoCoord.timing({
-          latitude: point.latitude,
-          longitude: point.longitude,
-          duration: 1000,
-          useNativeDriver: false,
-        }).start(() => resolve());
-      });
-
-      if (mapRef.current) {
-        mapRef.current.animateCamera(
-          {
-            center: {
-              latitude: point.latitude,
-              longitude: point.longitude,
-            },
-            zoom: 16,
-          },
-          { duration: 1000 }
-        );
-      }
-    }
+  const toggleMapType = () => {
+    setMapType((prev) => (prev === 'standard' ? 'satellite' : 'standard'));
   };
 
   return (
@@ -83,18 +84,21 @@ const Mapa = () => {
             ref={mapRef}
             style={styles.map}
             initialRegion={region}
-            onRegionChangeComplete={setRegion}
+            mapType={mapType}
             showsUserLocation={true}
+            showsMyLocationButton={true} // Android: botón nativo centrar ubicación
+            zoomControlEnabled={true}    // Android: botones nativos de zoom
+            showsCompass={true}          // brújula nativa iOS y Android
           >
             <Polyline coordinates={puntosRuta} strokeWidth={4} strokeColor="blue" />
-
-            {/* Marker animado sin imagen, solo pin por defecto */}
             <Marker.Animated coordinate={carritoCoord} />
           </MapView>
 
-          <View style={styles.buttonContainer}>
-            <Button title="Iniciar recorrido" onPress={iniciarRecorrido} />
-          </View>
+          <TouchableOpacity style={styles.btnMapType} onPress={toggleMapType} activeOpacity={0.7}>
+            <Text style={styles.btnText}>
+              {mapType === 'standard' ? 'Satélite' : 'Mapa'}
+            </Text>
+          </TouchableOpacity>
         </>
       ) : (
         <Text style={styles.text}>Cargando mapa...</Text>
@@ -117,10 +121,23 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 18,
   },
-  buttonContainer: {
+  btnMapType: {
     position: 'absolute',
     bottom: 40,
-    alignSelf: 'center',
-    zIndex: 1000,
+    left: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // negro semi-transparente
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  btnText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
